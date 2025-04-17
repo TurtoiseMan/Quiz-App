@@ -4,7 +4,7 @@ import { User } from "@/types";
 import { getCurrentUser } from "@/data/storageService";
 import { useEffect, useState } from "react";
 
-export default function Dashboard() {
+export default function AnswersPage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -18,25 +18,22 @@ export default function Dashboard() {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h1 className="text-2xl font-bold mb-4 text-black">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-4 text-black">
+        {user?.role === "admin" ? "View All Answers" : "Answer Questions"}
+      </h1>
 
-      {user.role === "admin" ? (
+      {user?.role === "admin" ? (
         <div className="bg-blue-50 p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-2 text-black">
-            Admin Dashboard
-          </h2>
           <p className="text-black">
-            Welcome admin! You have access to manage questions and view all
-            answers.
+            This is the admin view of the answers page. Here you can view all
+            answers submitted by users.
           </p>
         </div>
       ) : (
         <div className="bg-green-50 p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-2 text-black">
-            User Dashboard
-          </h2>
           <p className="text-black">
-            Welcome user! You can answer questions and view/edit your responses.
+            This is the user view of the answers page. Here you can submit
+            answers to questions and edit your previous answers.
           </p>
         </div>
       )}

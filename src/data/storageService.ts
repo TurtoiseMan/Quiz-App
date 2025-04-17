@@ -1,12 +1,16 @@
-import { User, Question, Answer } from '../types';
-import { users as initialUsers, questions as initialQuestions, answers as initialAnswers } from './mockData';
+import { User, Question, Answer } from "../types";
+import {
+  users as initialUsers,
+  questions as initialQuestions,
+  answers as initialAnswers,
+} from "./mockData";
 
-const USERS_KEY = 'quiz_app_users';
-const QUESTIONS_KEY = 'quiz_app_questions';
-const ANSWERS_KEY = 'quiz_app_answers';
-const CURRENT_USER_KEY = 'quiz_app_current_user';
+const USERS_KEY = "quiz_app_users";
+const QUESTIONS_KEY = "quiz_app_questions";
+const ANSWERS_KEY = "quiz_app_answers";
+const CURRENT_USER_KEY = "quiz_app_current_user";
 
-const isBrowser = typeof window !== 'undefined';
+const isBrowser = typeof window !== "undefined";
 
 const initializeData = () => {
   if (!isBrowser) return;
@@ -66,7 +70,6 @@ export const login = (username: string, password: string): User | null => {
 export const logout = (): void => {
   setCurrentUser(null);
 };
-
 
 if (isBrowser) {
   initializeData();
