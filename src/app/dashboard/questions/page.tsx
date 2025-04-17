@@ -1,10 +1,19 @@
 "use client";
 
 import { useAuthStore } from "@/store/authStore";
+import { useQuizStore } from "@/store/quizStore";
+import { useEffect, useState } from "react";
+import { Question } from "@/types";
 
 export default function QuestionsPage() {
   const user = useAuthStore((state) => state.user);
   const isAdmin = useAuthStore((state) => state.isAdmin);
+  const getQuestions = useQuizStore((state) => state.getQuestions);
+  const [questions, setQuestions] = useState<Question[]>([]);
+
+  useEffect(() => {
+    setQuestions(getQuestions());
+  }, [getQuestions]);
 
   if (!user || !isAdmin()) return null;
 
@@ -17,12 +26,34 @@ export default function QuestionsPage() {
         </button>
       </div>
 
-      <div className="bg-blue-50 p-6 rounded-lg">
-        <p className="text-center text-black">
-          This is the admin-only questions management page. Here you will be
-          able to create, edit, and delete quiz questions.
-        </p>
-      </div>
+      {questions.length === 0 ? (
+        <div className="bg-blue-50 p-6 rounded-lg">
+          <p className="text-center text-black">
+            No questions available yet. Click "Add New Question" to create one.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question) => (
+            <div key={question.id} className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex justify-between">
+                <p className="text-black font-medium">{question.text}</p>
+                <div className="space-x-2">
+                  <button className="text-blue-600 hover:text-blue-800">
+                    Edit
+                  </button>
+                  <button className="text-red-600 hover:text-red-800">
+                    Delete
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Created: {new Date(question.createdAt).toLocaleString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
