@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { login } from "@/data/storageService";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 export default function SignInPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const login = useAuthStore((state) => state.login);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,8 +19,8 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const user = login(username, password);
-      if (user) {
+      const success = login(username, password);
+      if (success) {
         router.push("/dashboard");
       } else {
         setError("Invalid username or password");
@@ -94,10 +96,14 @@ export default function SignInPage() {
             </button>
           </div>
 
-          <div className="text-center text-sm text-gray-600">
+          <div className="text-center text-sm">
             <p>Demo accounts:</p>
-            <p className="mt-1">Admin: username - admin, password - admin123</p>
-            <p>User: username - user1, password - user123</p>
+            <p className="mt-1 text-gray-600">
+              Admin: username - admin, password - admin123
+            </p>
+            <p className="text-gray-600">
+              User: username - user1, password - user123
+            </p>
           </div>
         </form>
       </div>

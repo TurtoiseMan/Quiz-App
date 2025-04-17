@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCurrentUser, logout } from "@/data/storageService";
 import { useRouter, usePathname } from "next/navigation";
-import { User } from "@/types";
+import { useAuthStore } from "@/store/authStore";
 import Navbar from "@/components/Navbar";
 
 export default function DashboardLayout({
@@ -11,32 +10,42 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isAdmin, logout } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
-      router.push("/signin");
-    } else if (
-      pathname.includes("/questions") &&
-      currentUser.role !== "admin"
-    ) {
-      router.push("/dashboard");
-    } else {
-      setUser(currentUser);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const checkAccess = async () => {
+      if (!user) {
+        router.push("/signin");
+        return;
+      }
+
+      if (pathname.includes("/questions") && !isAdmin()) {
+        router.push("/dashboard");
+        return;
+      }
+
       setLoading(false);
-    }
-  }, [router, pathname]);
+    };
+
+    checkAccess();
+  }, [user, isAdmin, router, pathname, hydrated]);
 
   const handleSignOut = () => {
     logout();
     router.push("/signin");
   };
 
-  if (loading) {
+  if (!hydrated || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         Loading...
