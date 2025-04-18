@@ -29,6 +29,7 @@ export default function AnswersPage() {
   const [answerText, setAnswerText] = useState("");
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const getUsernameById = (userId: string) => {
     const foundUser = users.find((u) => u.id === userId);
@@ -51,6 +52,7 @@ export default function AnswersPage() {
 
   const handleQuestionSelect = (question: Question) => {
     setSelectedQuestion(question);
+    setShowFeedback(false);
 
     if (!isAdmin() && user) {
       const existingAnswer = getAnswerByQuestionAndUser(question.id, user.id);
@@ -81,15 +83,17 @@ export default function AnswersPage() {
         }
 
         setUserAnswers(getAnswersByUser(user.id));
-        setAnswerText("");
-        setEditingAnswerId(null);
-        setSelectedQuestion(null);
+        setShowFeedback(true);
         setError("");
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
     }
+  };
+
+  const isCorrectAnswer = () => {
+    return selectedQuestion && answerText === selectedQuestion.correctAnswer;
   };
 
   const renderAdminView = () => (
@@ -123,12 +127,14 @@ export default function AnswersPage() {
                       >
                         <div className="flex justify-between">
                           <p className="text-black">
-                            Selected option: <span className="font-medium">{answer.text}</span>
+                            Selected option:{" "}
+                            <span className="font-medium">{answer.text}</span>
                           </p>
                         </div>
                         <div className="flex justify-between mt-2">
                           <p className="text-xs text-gray-500">
-                            Username: {getUsernameById(answer.userId)} | Last updated:{" "}
+                            Username: {getUsernameById(answer.userId)} | Last
+                            updated:{" "}
                             {new Date(answer.updatedAt).toLocaleString()}
                           </p>
                           <p className="text-xs text-blue-600">
@@ -224,6 +230,7 @@ export default function AnswersPage() {
                   setSelectedQuestion(null);
                   setAnswerText("");
                   setEditingAnswerId(null);
+                  setShowFeedback(false);
                 }}
                 className="px-4 py-2 text-sm font-medium text-black bg-gray-100 rounded-md hover:bg-gray-200"
               >
@@ -237,6 +244,30 @@ export default function AnswersPage() {
               </button>
             </div>
           </form>
+
+          {showFeedback && (
+            <div className="mt-6">
+              <div
+                className={`p-4 rounded ${
+                  isCorrectAnswer()
+                    ? "bg-green-50 text-green-700"
+                    : "bg-red-50 text-red-700"
+                }`}
+              >
+                {isCorrectAnswer()
+                  ? "Your answer is correct!"
+                  : "Your answer is incorrect."}
+
+                {!isCorrectAnswer() && selectedQuestion && (
+                  <div className="mt-2">
+                    <p className="font-medium">
+                      Correct answer: {selectedQuestion.correctAnswer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {editingAnswerId && (
             <div className="mt-6">

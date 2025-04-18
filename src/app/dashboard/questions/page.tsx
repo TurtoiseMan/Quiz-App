@@ -20,6 +20,7 @@ export default function QuestionsPage() {
   );
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
+  const [correctAnswer, setCorrectAnswer] = useState<string>("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function QuestionsPage() {
   const handleAddQuestion = () => {
     setQuestionText("");
     setOptions(["", "", "", ""]);
+    setCorrectAnswer("");
     setError("");
     setIsAddingQuestion(true);
     setEditingQuestionId(null);
@@ -39,6 +41,7 @@ export default function QuestionsPage() {
   const handleEditQuestion = (question: Question) => {
     setQuestionText(question.text);
     setOptions([...question.options]);
+    setCorrectAnswer(question.correctAnswer);
     setError("");
     setIsAddingQuestion(false);
     setEditingQuestionId(question.id);
@@ -72,18 +75,24 @@ export default function QuestionsPage() {
       return;
     }
 
+    if (!correctAnswer) {
+      setError("Please select a correct answer");
+      return;
+    }
+
     try {
       if (editingQuestionId) {
-        updateQuestion(editingQuestionId, questionText, options);
+        updateQuestion(editingQuestionId, questionText, options, correctAnswer);
         setQuestions(getQuestions());
       } else if (user) {
         const newQuestion = addQuestion(questionText, user.id);
-        updateQuestion(newQuestion.id, questionText, options);
+        updateQuestion(newQuestion.id, questionText, options, correctAnswer);
         setQuestions(getQuestions());
       }
 
       setQuestionText("");
       setOptions(["", "", "", ""]);
+      setCorrectAnswer("");
       setIsAddingQuestion(false);
       setEditingQuestionId(null);
       setError("");
@@ -98,6 +107,7 @@ export default function QuestionsPage() {
     setEditingQuestionId(null);
     setQuestionText("");
     setOptions(["", "", "", ""]);
+    setCorrectAnswer("");
     setError("");
   };
 
@@ -158,7 +168,9 @@ export default function QuestionsPage() {
                     <input
                       type="text"
                       value={option}
-                      onChange={(e) => handleOptionChange(index, e.target.value)}
+                      onChange={(e) =>
+                        handleOptionChange(index, e.target.value)
+                      }
                       placeholder={`Enter option ${String.fromCharCode(
                         65 + index
                       )}...`}
@@ -167,6 +179,30 @@ export default function QuestionsPage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="mb-4">
+              <label
+                htmlFor="correctAnswer"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Correct Answer
+              </label>
+              <select
+                id="correctAnswer"
+                value={correctAnswer}
+                onChange={(e) => setCorrectAnswer(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
+              >
+                <option value="" disabled>
+                  Select the correct answer...
+                </option>
+                {options.map((option, index) => (
+                  <option key={index} value={option}>
+                    {String.fromCharCode(65 + index)}: {option}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex justify-end space-x-2">
@@ -227,6 +263,9 @@ export default function QuestionsPage() {
                     </div>
                   ))}
                 </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Correct Answer: {question.correctAnswer}
+                </p>
                 <p className="text-xs text-gray-500 mt-2">
                   Created: {new Date(question.createdAt).toLocaleString()}
                 </p>

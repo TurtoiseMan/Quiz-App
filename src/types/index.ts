@@ -11,6 +11,7 @@ export interface Question {
   id: string;
   text: string;
   options: string[];
+  correctAnswer: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;

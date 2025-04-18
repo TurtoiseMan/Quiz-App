@@ -12,7 +12,12 @@ interface QuizState {
 
   getQuestions: () => Question[];
   addQuestion: (text: string, createdBy: string) => Question;
-  updateQuestion: (id: string, text: string, options?: string[]) => Question | null;
+  updateQuestion: (
+    id: string,
+    text: string,
+    options?: string[],
+    correctAnswer?: string
+  ) => Question | null;
   deleteQuestion: (id: string) => boolean;
 
   getAnswers: () => Answer[];
@@ -41,6 +46,7 @@ export const useQuizStore = create<QuizState>()(
           id: Date.now().toString(),
           text,
           options: ["Option A", "Option B", "Option C", "Option D"],
+          correctAnswer: "Option A",
           createdBy,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -53,7 +59,12 @@ export const useQuizStore = create<QuizState>()(
         return newQuestion;
       },
 
-      updateQuestion: (id: string, text: string, options?: string[]) => {
+      updateQuestion: (
+        id: string,
+        text: string,
+        options?: string[],
+        correctAnswer?: string
+      ) => {
         let updatedQuestion: Question | null = null;
 
         set((state) => {
@@ -66,6 +77,7 @@ export const useQuizStore = create<QuizState>()(
             ...questions[index],
             text,
             options: options || questions[index].options,
+            correctAnswer: correctAnswer || questions[index].correctAnswer,
             updatedAt: new Date().toISOString(),
           };
 
