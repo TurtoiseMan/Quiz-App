@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Question, Answer } from "@/types";
+import { Question, Answer, Quiz } from "@/types";
 import {
   questions as initialQuestions,
   answers as initialAnswers,
@@ -9,6 +9,7 @@ import {
 interface QuizState {
   questions: Question[];
   answers: Answer[];
+  quizzes: Quiz[];
 
   getQuestions: () => Question[];
   addQuestion: (text: string, createdBy: string) => Question;
@@ -30,6 +31,24 @@ interface QuizState {
   addAnswer: (questionId: string, userId: string, text: string) => Answer;
   updateAnswer: (id: string, text: string) => Answer | null;
 
+  getQuizzes: () => Quiz[];
+  getQuizById: (id: string) => Quiz | undefined;
+  createQuiz: (
+    title: string,
+    description: string,
+    timeLimit: number,
+    questionIds: string[],
+    createdBy: string
+  ) => Quiz;
+  updateQuiz: (
+    id: string,
+    title?: string,
+    description?: string,
+    timeLimit?: number,
+    questionIds?: string[]
+  ) => Quiz | null;
+  deleteQuiz: (id: string) => boolean;
+
   initializeStore: () => void;
 }
 
@@ -38,6 +57,7 @@ export const useQuizStore = create<QuizState>()(
     (set, get) => ({
       questions: initialQuestions,
       answers: initialAnswers,
+      quizzes: [],
 
       getQuestions: () => get().questions,
 
@@ -171,6 +191,87 @@ export const useQuizStore = create<QuizState>()(
         return updatedAnswer;
       },
 
+      getQuizzes: () => get().quizzes,
+
+      getQuizById: (id: string) => {
+        return get().quizzes.find((q) => q.id === id);
+      },
+
+      createQuiz: (
+        title: string,
+        description: string,
+        timeLimit: number,
+        questionIds: string[],
+        createdBy: string
+      ) => {
+        const newQuiz: Quiz = {
+          id: Date.now().toString(),
+          title,
+          description,
+          timeLimit,
+          questionIds,
+          createdBy,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        set((state) => ({
+          quizzes: [...state.quizzes, newQuiz],
+        }));
+
+        return newQuiz;
+      },
+
+      updateQuiz: (
+        id: string,
+        title?: string,
+        description?: string,
+        timeLimit?: number,
+        questionIds?: string[]
+      ) => {
+        let updatedQuiz: Quiz | null = null;
+
+        set((state) => {
+          const quizzes = [...state.quizzes];
+          const index = quizzes.findIndex((q) => q.id === id);
+
+          if (index === -1) return state;
+
+          const currentQuiz = quizzes[index];
+          updatedQuiz = {
+            ...currentQuiz,
+            title: title || currentQuiz.title,
+            description: description || currentQuiz.description,
+            timeLimit:
+              timeLimit !== undefined ? timeLimit : currentQuiz.timeLimit,
+            questionIds: questionIds || currentQuiz.questionIds,
+            updatedAt: new Date().toISOString(),
+          };
+
+          quizzes[index] = updatedQuiz!;
+          return { quizzes };
+        });
+
+        return updatedQuiz;
+      },
+
+      deleteQuiz: (id: string) => {
+        let success = false;
+
+        set((state) => {
+          const quizzes = state.quizzes.filter((q) => q.id !== id);
+
+          if (quizzes.length === state.quizzes.length) {
+            return state;
+          }
+
+          success = true;
+          return { quizzes };
+        });
+
+        return success;
+      },
+
       initializeStore: () => {
         set((state) => ({ ...state }));
       },
@@ -180,6 +281,7 @@ export const useQuizStore = create<QuizState>()(
       partialize: (state) => ({
         questions: state.questions,
         answers: state.answers,
+        quizzes: state.quizzes,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -188,6 +290,9 @@ export const useQuizStore = create<QuizState>()(
           }
           if (!state.answers || state.answers.length === 0) {
             state.answers = initialAnswers;
+          }
+          if (!state.quizzes) {
+            state.quizzes = [];
           }
         }
       },

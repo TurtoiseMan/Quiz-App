@@ -31,3 +31,27 @@ export interface AnswerHistory {
   text: string;
   updatedAt: string;
 }
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description: string;
+  timeLimit: number;
+  questionIds: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuizAttempt {
+  id: string;
+  quizId: string;
+  userId: string;
+  startedAt: string;
+  completedAt?: string;
+  score?: number;
+  answers: {
+    questionId: string;
+    answerId: string;
+  }[];
+}
