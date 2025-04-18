@@ -122,7 +122,9 @@ export default function AnswersPage() {
                         className="bg-gray-50 p-4 rounded-lg"
                       >
                         <div className="flex justify-between">
-                          <p className="text-black">{answer.text}</p>
+                          <p className="text-black">
+                            Selected option: <span className="font-medium">{answer.text}</span>
+                          </p>
                         </div>
                         <div className="flex justify-between mt-2">
                           <p className="text-xs text-gray-500">
@@ -131,10 +133,10 @@ export default function AnswersPage() {
                           </p>
                           <p className="text-xs text-blue-600">
                             {answer.history && answer.history.length > 0
-                              ? `Edited ${answer.history.length} ${
+                              ? `Changed ${answer.history.length} ${
                                   answer.history.length === 1 ? "time" : "times"
                                 }`
-                              : "Original answer"}
+                              : "Original selection"}
                           </p>
                         </div>
 
@@ -142,12 +144,12 @@ export default function AnswersPage() {
                           <div className="mt-3">
                             <details className="text-sm">
                               <summary className="text-blue-600 cursor-pointer">
-                                View edit history
+                                View change history
                               </summary>
                               <div className="mt-2 space-y-2 pl-4 border-l-2 border-gray-200">
                                 {answer.history.map((historyItem, index) => (
                                   <div key={index} className="text-gray-700">
-                                    <p>{historyItem.text}</p>
+                                    <p>Selected: {historyItem.text}</p>
                                     <p className="text-xs text-gray-500">
                                       {new Date(
                                         historyItem.updatedAt
@@ -189,20 +191,30 @@ export default function AnswersPage() {
             )}
 
             <div className="mb-4">
-              <label
-                htmlFor="answerText"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Your Answer
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Choose an option:
               </label>
-              <textarea
-                id="answerText"
-                value={answerText}
-                onChange={(e) => setAnswerText(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
-                rows={4}
-                placeholder="Enter your answer..."
-              />
+              <div className="space-y-3">
+                {selectedQuestion?.options.map((option) => (
+                  <div key={option} className="flex items-center">
+                    <input
+                      id={`option-${option}`}
+                      name="answer-option"
+                      type="radio"
+                      value={option}
+                      checked={answerText === option}
+                      onChange={() => setAnswerText(option)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <label
+                      htmlFor={`option-${option}`}
+                      className="ml-3 block text-sm font-medium text-black"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2">

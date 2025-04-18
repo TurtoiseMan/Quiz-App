@@ -4,14 +4,15 @@ export interface User {
   id: string;
   username: string;
   password: string;
-  role: UserRole;
+  role: "admin" | "user";
 }
 
 export interface Question {
   id: string;
   text: string;
-  createdAt: string;
+  options: string[];
   createdBy: string;
+  createdAt: string;
   updatedAt: string;
 }
 
@@ -22,8 +23,10 @@ export interface Answer {
   text: string;
   createdAt: string;
   updatedAt: string;
-  history?: {
-    text: string;
-    updatedAt: string;
-  }[];
+  history?: AnswerHistory[];
+}
+
+export interface AnswerHistory {
+  text: string;
+  updatedAt: string;
 }

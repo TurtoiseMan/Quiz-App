@@ -19,6 +19,7 @@ export default function QuestionsPage() {
     null
   );
   const [questionText, setQuestionText] = useState("");
+  const [options, setOptions] = useState<string[]>(["", "", "", ""]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function QuestionsPage() {
 
   const handleAddQuestion = () => {
     setQuestionText("");
+    setOptions(["", "", "", ""]);
     setError("");
     setIsAddingQuestion(true);
     setEditingQuestionId(null);
@@ -36,6 +38,7 @@ export default function QuestionsPage() {
 
   const handleEditQuestion = (question: Question) => {
     setQuestionText(question.text);
+    setOptions([...question.options]);
     setError("");
     setIsAddingQuestion(false);
     setEditingQuestionId(question.id);
@@ -50,6 +53,12 @@ export default function QuestionsPage() {
     }
   };
 
+  const handleOptionChange = (index: number, value: string) => {
+    const newOptions = [...options];
+    newOptions[index] = value;
+    setOptions(newOptions);
+  };
+
   const handleSubmitQuestion = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -58,18 +67,26 @@ export default function QuestionsPage() {
       return;
     }
 
+    if (options.some((option) => !option.trim())) {
+      setError("All options must be filled");
+      return;
+    }
+
     try {
       if (editingQuestionId) {
-        updateQuestion(editingQuestionId, questionText);
+        updateQuestion(editingQuestionId, questionText, options);
+        setQuestions(getQuestions());
       } else if (user) {
-        addQuestion(questionText, user.id);
+        const newQuestion = addQuestion(questionText, user.id);
+        updateQuestion(newQuestion.id, questionText, options);
+        setQuestions(getQuestions());
       }
 
       setQuestionText("");
+      setOptions(["", "", "", ""]);
       setIsAddingQuestion(false);
       setEditingQuestionId(null);
       setError("");
-      setQuestions(getQuestions());
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
@@ -80,6 +97,7 @@ export default function QuestionsPage() {
     setIsAddingQuestion(false);
     setEditingQuestionId(null);
     setQuestionText("");
+    setOptions(["", "", "", ""]);
     setError("");
   };
 
@@ -125,6 +143,30 @@ export default function QuestionsPage() {
                 rows={3}
                 placeholder="Enter the question text..."
               />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Options
+              </label>
+              <div className="space-y-2">
+                {options.map((option, index) => (
+                  <div key={index} className="flex items-center">
+                    <span className="mr-2 w-6 text-center font-medium text-gray-700">
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(index, e.target.value)}
+                      placeholder={`Enter option ${String.fromCharCode(
+                        65 + index
+                      )}...`}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2">
@@ -174,6 +216,16 @@ export default function QuestionsPage() {
                       Delete
                     </button>
                   </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {question.options.map((option, index) => (
+                    <div key={index} className="text-sm text-gray-700">
+                      <span className="font-medium mr-1">
+                        {String.fromCharCode(65 + index)}:
+                      </span>{" "}
+                      {option}
+                    </div>
+                  ))}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
                   Created: {new Date(question.createdAt).toLocaleString()}
