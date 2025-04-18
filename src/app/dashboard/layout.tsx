@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { useQuizStore } from "@/store/quizStore";
 import Navbar from "@/components/Navbar";
 
 export default function DashboardLayout({
@@ -11,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, isAdmin, logout } = useAuthStore();
+  const initializeStore = useQuizStore((state) => state.initializeStore);
   const [loading, setLoading] = useState(true);
   const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
@@ -18,7 +20,8 @@ export default function DashboardLayout({
 
   useEffect(() => {
     setHydrated(true);
-  }, []);
+    initializeStore();
+  }, [initializeStore]);
 
   useEffect(() => {
     if (!hydrated) return;
