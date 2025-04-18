@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Question, Answer, Quiz } from "@/types";
+import { Question, Answer, Quiz, QuizAttempt } from "@/types";
 import {
   questions as initialQuestions,
   answers as initialAnswers,
@@ -10,6 +10,7 @@ interface QuizState {
   questions: Question[];
   answers: Answer[];
   quizzes: Quiz[];
+  quizAttempts: QuizAttempt[];
 
   getQuestions: () => Question[];
   addQuestion: (text: string, createdBy: string) => Question;
@@ -49,6 +50,17 @@ interface QuizState {
   ) => Quiz | null;
   deleteQuiz: (id: string) => boolean;
 
+  getQuizAttempts: () => QuizAttempt[];
+  getQuizAttemptsByUser: (userId: string) => QuizAttempt[];
+  getQuizAttemptById: (id: string) => QuizAttempt | undefined;
+  startQuizAttempt: (quizId: string, userId: string) => QuizAttempt;
+  submitQuizAnswer: (
+    attemptId: string,
+    questionId: string,
+    answerId: string
+  ) => QuizAttempt | null;
+  completeQuizAttempt: (attemptId: string) => QuizAttempt | null;
+
   initializeStore: () => void;
 }
 
@@ -58,6 +70,7 @@ export const useQuizStore = create<QuizState>()(
       questions: initialQuestions,
       answers: initialAnswers,
       quizzes: [],
+      quizAttempts: [],
 
       getQuestions: () => get().questions,
 
@@ -272,6 +285,107 @@ export const useQuizStore = create<QuizState>()(
         return success;
       },
 
+      getQuizAttempts: () => get().quizAttempts,
+
+      getQuizAttemptsByUser: (userId: string) => {
+        return get().quizAttempts.filter((a) => a.userId === userId);
+      },
+
+      getQuizAttemptById: (id: string) => {
+        return get().quizAttempts.find((a) => a.id === id);
+      },
+
+      startQuizAttempt: (quizId: string, userId: string) => {
+        const quiz = get().getQuizById(quizId);
+        if (!quiz) {
+          throw new Error(`Quiz with id ${quizId} not found`);
+        }
+
+        const newAttempt: QuizAttempt = {
+          id: crypto.randomUUID(),
+          quizId,
+          userId,
+          startedAt: new Date().toISOString(),
+          answers: [],
+        };
+
+        set((state) => ({
+          quizAttempts: [...state.quizAttempts, newAttempt],
+        }));
+
+        return newAttempt;
+      },
+
+      submitQuizAnswer: (
+        attemptId: string,
+        questionId: string,
+        answerId: string
+      ) => {
+        const attempt = get().getQuizAttemptById(attemptId);
+        if (!attempt) return null;
+
+        if (attempt.completedAt) {
+          console.warn("Cannot submit answers to a completed quiz attempt");
+          return null;
+        }
+
+        const updatedAttempt = {
+          ...attempt,
+          answers: [
+            ...attempt.answers.filter((a) => a.questionId !== questionId),
+            { questionId, answerId },
+          ],
+        };
+
+        set((state) => ({
+          quizAttempts: state.quizAttempts.map((a) =>
+            a.id === attemptId ? updatedAttempt : a
+          ),
+        }));
+
+        return updatedAttempt;
+      },
+
+      completeQuizAttempt: (attemptId: string) => {
+        const attempt = get().getQuizAttemptById(attemptId);
+        if (!attempt) return null;
+
+        const quiz = get().getQuizById(attempt.quizId);
+        if (!quiz) return null;
+
+        let correctAnswers = 0;
+        let totalQuestions = quiz.questionIds.length;
+
+        for (const questionId of quiz.questionIds) {
+          const question = get().questions.find((q) => q.id === questionId);
+          if (!question) continue;
+
+          const userAnswer = attempt.answers.find(
+            (a) => a.questionId === questionId
+          )?.answerId;
+          if (userAnswer && userAnswer === question.correctAnswer) {
+            correctAnswers++;
+          }
+        }
+
+        const score =
+          totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+
+        const updatedAttempt = {
+          ...attempt,
+          completedAt: new Date().toISOString(),
+          score,
+        };
+
+        set((state) => ({
+          quizAttempts: state.quizAttempts.map((a) =>
+            a.id === attemptId ? updatedAttempt : a
+          ),
+        }));
+
+        return updatedAttempt;
+      },
+
       initializeStore: () => {
         set((state) => ({ ...state }));
       },
@@ -282,6 +396,7 @@ export const useQuizStore = create<QuizState>()(
         questions: state.questions,
         answers: state.answers,
         quizzes: state.quizzes,
+        quizAttempts: state.quizAttempts,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -293,6 +408,9 @@ export const useQuizStore = create<QuizState>()(
           }
           if (!state.quizzes) {
             state.quizzes = [];
+          }
+          if (!state.quizAttempts) {
+            state.quizAttempts = [];
           }
         }
       },

@@ -32,10 +32,10 @@ export default function DashboardLayout({
         return;
       }
 
-      if (pathname.includes("/questions") && !isAdmin()) {
-        router.push("/dashboard");
-        return;
-      }
+      // if (pathname.includes("/questions") && !isAdmin()) {
+      //   router.push("/dashboard");
+      //   return;
+      // }
 
       setLoading(false);
     };
