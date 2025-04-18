@@ -64,6 +64,7 @@ export default function SignInPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
+                autoComplete="username"
               />
             </div>
 
@@ -82,6 +83,7 @@ export default function SignInPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
+                autoComplete="current-password"
               />
             </div>
           </div>

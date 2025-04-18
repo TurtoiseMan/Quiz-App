@@ -22,7 +22,11 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold">Quiz App</span>
+              <a href="/dashboard">
+                <span className="text-xl font-bold text-teal-500">
+                  Quiz App
+                </span>
+              </a>
             </div>
           </div>
 
