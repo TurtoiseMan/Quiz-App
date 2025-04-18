@@ -8,6 +8,7 @@ import { Question, Answer } from "@/types";
 export default function AnswersPage() {
   const user = useAuthStore((state) => state.user);
   const isAdmin = useAuthStore((state) => state.isAdmin);
+  const users = useAuthStore((state) => state.users);
 
   const getQuestions = useQuizStore((state) => state.getQuestions);
   const getAnswersByQuestion = useQuizStore(
@@ -28,6 +29,11 @@ export default function AnswersPage() {
   const [answerText, setAnswerText] = useState("");
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [error, setError] = useState("");
+
+  const getUsernameById = (userId: string) => {
+    const foundUser = users.find((u) => u.id === userId);
+    return foundUser ? foundUser.username : userId;
+  };
 
   useEffect(() => {
     const allQuestions = getQuestions();
@@ -120,7 +126,7 @@ export default function AnswersPage() {
                         </div>
                         <div className="flex justify-between mt-2">
                           <p className="text-xs text-gray-500">
-                            userId: {answer.userId} | Last updated:{" "}
+                            Username: {getUsernameById(answer.userId)} | Last updated:{" "}
                             {new Date(answer.updatedAt).toLocaleString()}
                           </p>
                           <p className="text-xs text-blue-600">
