@@ -25,6 +25,7 @@ import {
   Statistic,
   Popconfirm,
   List,
+  Tooltip,
 } from "antd";
 
 const { Title, Text, Paragraph } = Typography;
@@ -118,19 +119,6 @@ export default function QuestionsPage() {
 
       const remainingTime = Math.max(0, Math.floor((endTime - now) / 1000));
       setTimeRemaining(remainingTime);
-
-      const timer = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            handleSubmitQuiz();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
     } else {
       setIsQuizCompleted(true);
       setQuizScore(attempt.score || 0);
@@ -190,12 +178,6 @@ export default function QuestionsPage() {
       message.success("Quiz submitted successfully!");
     }
   };
-
-  // const formatTime = (seconds: number): string => {
-  //   const minutes = Math.floor(seconds / 60);
-  //   const remainingSeconds = seconds % 60;
-  //   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  // };
 
   const handleAddQuestion = () => {
     form.resetFields();
@@ -487,9 +469,30 @@ export default function QuestionsPage() {
                 Next
               </Button>
             ) : (
-              <Button type="primary" danger onClick={handleSubmitQuiz}>
-                Submit Quiz
-              </Button>
+              <Tooltip
+                title={
+                  !quizQuestions.every((q) => selectedAnswers[q.id])
+                    ? "Please answer all questions before submitting"
+                    : ""
+                }
+                open={
+                  !quizQuestions.every((q) => selectedAnswers[q.id])
+                    ? undefined
+                    : false
+                }
+              >
+                <Button
+                  type="primary"
+                  danger
+                  onClick={handleSubmitQuiz}
+                  disabled={
+                    timeRemaining <= 0 ||
+                    !quizQuestions.every((q) => selectedAnswers[q.id])
+                  }
+                >
+                  Submit Quiz
+                </Button>
+              </Tooltip>
             )}
           </Space>
         </Space>
