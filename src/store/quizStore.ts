@@ -4,6 +4,7 @@ import { Question, Answer, Quiz, QuizAttempt } from "@/types";
 import {
   questions as initialQuestions,
   answers as initialAnswers,
+  quizzes as initialQuizzes,
 } from "@/data/mockData";
 
 interface QuizState {
@@ -69,7 +70,7 @@ export const useQuizStore = create<QuizState>()(
     (set, get) => ({
       questions: initialQuestions,
       answers: initialAnswers,
-      quizzes: [],
+      quizzes: initialQuizzes,
       quizAttempts: [],
 
       getQuestions: () => get().questions,
@@ -406,8 +407,8 @@ export const useQuizStore = create<QuizState>()(
           if (!state.answers || state.answers.length === 0) {
             state.answers = initialAnswers;
           }
-          if (!state.quizzes) {
-            state.quizzes = [];
+          if (!state.quizzes || state.quizzes.length === 0) {
+            state.quizzes = initialQuizzes;
           }
           if (!state.quizAttempts) {
             state.quizAttempts = [];

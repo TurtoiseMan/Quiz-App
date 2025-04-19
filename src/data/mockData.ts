@@ -1,4 +1,4 @@
-import { Question, Answer, User } from "@/types";
+import { Question, Answer, User, Quiz } from "@/types";
 
 export const users: User[] = [
   {
@@ -78,5 +78,38 @@ export const answers: Answer[] = [
     createdAt: "2023-01-10T14:30:00.000Z",
     updatedAt: "2023-01-10T14:30:00.000Z",
     history: [],
+  },
+];
+
+export const quizzes: Quiz[] = [
+  {
+    id: "1745008161854",
+    title: "Quiz 1",
+    description: "This is the first quiz",
+    timeLimit: 10,
+    questionIds: ["q1", "q2", "q5"],
+    createdBy: "admin_id",
+    createdAt: "2025-04-18T20:29:21.854Z",
+    updatedAt: "2025-04-18T23:29:39.044Z",
+  },
+  {
+    id: "1745019382506",
+    title: "Quiz 2",
+    description: "This is the second quiz",
+    timeLimit: 1,
+    questionIds: ["q2", "q1", "q3", "q4", "q5"],
+    createdBy: "admin_id",
+    createdAt: "2025-04-18T23:36:22.506Z",
+    updatedAt: "2025-04-19T15:07:08.594Z",
+  },
+  {
+    id: "1745054839942",
+    title: "Quiz 3",
+    description: "Quiz 3",
+    timeLimit: 30,
+    questionIds: ["q1", "q2", "q3", "q4"],
+    createdBy: "admin_id",
+    createdAt: "2025-04-19T09:27:19.942Z",
+    updatedAt: "2025-04-19T09:27:19.943Z",
   },
 ];
