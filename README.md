@@ -4,7 +4,17 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 The application provides a quiz platform for creating, taking, and tracking quizzes with authentication and role-based access.
 
-**Live Demo:** [quiz-app.talha-khan.dev](https://quiz-app.talha-khan.dev) (Hosted on Vercel)
+## 🚀 Live Demo
+
+### [quiz-app.talha-khan.dev](https://quiz-app.talha-khan.dev)
+
+**Deployment Platform:** Vercel
+
+Try it out with these credentials:
+
+- **Admin Access:** username: `admin`, password: `admin123`
+- **User Access:** username: `user1`, password: `user123`
+- **User Access:** username: `user2`, password: `user456`
 
 ## Project Architecture
 
