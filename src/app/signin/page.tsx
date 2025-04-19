@@ -39,7 +39,7 @@ export default function SignInPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <Card className="w-full max-w-md" bordered>
+      <Card className="w-full max-w-md" variant="outlined">
         <div className="text-center mb-6">
           <Title level={2}>Quiz App</Title>
           <Title level={4}>Sign In</Title>
@@ -94,8 +94,9 @@ export default function SignInPage() {
           <div className="text-center text-sm">
             <p>
               Test accounts: <br />
-              admin / password <br />
-              student / password
+              admin / admin123 <br />
+              user1 / user123 <br />
+              user2 / user456 <br />
             </p>
           </div>
         </Form>
