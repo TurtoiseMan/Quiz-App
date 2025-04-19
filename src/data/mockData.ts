@@ -13,6 +13,12 @@ export const users: User[] = [
     password: "user123",
     role: "user",
   },
+  {
+    id: "user2_id",
+    username: "user2",
+    password: "user456",
+    role: "user",
+  },
 ];
 
 export const questions: Question[] = [
