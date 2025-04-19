@@ -447,80 +447,7 @@ export default function Dashboard() {
             </Paragraph>
           </Card>
 
-          <div className="mb-8">
-            <Title level={4}>Your Quiz Attempts</Title>
-
-            {quizAttempts.length === 0 ? (
-              <Alert
-                message="You haven't attempted any quizzes yet."
-                type="info"
-                showIcon
-              />
-            ) : (
-              <List
-                itemLayout="horizontal"
-                dataSource={quizAttempts}
-                renderItem={(attempt) => {
-                  const quiz = getQuizById(attempt.quizId);
-                  if (!quiz) return null;
-
-                  return (
-                    <List.Item
-                      key={attempt.id}
-                      actions={
-                        attempt.completedAt
-                          ? [
-                              <Tag key={`score-${attempt.id}`} color="blue">
-                                Score:{" "}
-                                {attempt.score !== undefined
-                                  ? `${attempt.score}%`
-                                  : "N/A"}
-                              </Tag>,
-                            ]
-                          : [
-                              <Tag key={`timer-${attempt.id}`} color="orange">
-                                {calculateTimeRemaining(quiz, attempt)}
-                              </Tag>,
-                              <Button
-                                key={`continue-${attempt.id}`}
-                                type="primary"
-                                size="small"
-                                href={`/dashboard/questions?attemptId=${attempt.id}`}
-                              >
-                                Continue
-                              </Button>,
-                            ]
-                      }
-                    >
-                      <List.Item.Meta
-                        title={quiz.title}
-                        description={
-                          <div>
-                            <Text>
-                              Started:{" "}
-                              {new Date(attempt.startedAt).toLocaleString()}
-                            </Text>
-                            {attempt.completedAt && (
-                              <div>
-                                <Text type="secondary">
-                                  Completed:{" "}
-                                  {new Date(
-                                    attempt.completedAt
-                                  ).toLocaleString()}
-                                </Text>
-                              </div>
-                            )}
-                          </div>
-                        }
-                      />
-                    </List.Item>
-                  );
-                }}
-              />
-            )}
-          </div>
-
-          <div>
+          <div className="mt-8">
             <Title level={4}>Available Quizzes</Title>
 
             {quizzes.length === 0 ? (
@@ -596,6 +523,80 @@ export default function Dashboard() {
                   );
                 })}
               </Row>
+            )}
+          </div>
+
+          <div className="my-8">
+            <Title level={4}>Your Quiz Attempts</Title>
+
+            {quizAttempts.length === 0 ? (
+              <Alert
+                message="You haven't attempted any quizzes yet."
+                type="info"
+                showIcon
+              />
+            ) : (
+              <List
+              className="max-h-[400px] overflow-y-auto"
+                itemLayout="horizontal"
+                dataSource={quizAttempts}
+                renderItem={(attempt) => {
+                  const quiz = getQuizById(attempt.quizId);
+                  if (!quiz) return null;
+
+                  return (
+                    <List.Item
+                      key={attempt.id}
+                      actions={
+                        attempt.completedAt
+                          ? [
+                              <Tag key={`score-${attempt.id}`} color="blue">
+                                Score:{" "}
+                                {attempt.score !== undefined
+                                  ? `${attempt.score}%`
+                                  : "N/A"}
+                              </Tag>,
+                            ]
+                          : [
+                              <Tag key={`timer-${attempt.id}`} color="orange">
+                                {calculateTimeRemaining(quiz, attempt)}
+                              </Tag>,
+                              <Button
+                                key={`continue-${attempt.id}`}
+                                type="primary"
+                                size="small"
+                                href={`/dashboard/questions?attemptId=${attempt.id}`}
+                              >
+                                Continue
+                              </Button>,
+                            ]
+                      }
+                    >
+                      <List.Item.Meta
+                        title={quiz.title}
+                        description={
+                          <div>
+                            <Text>
+                              Started:{" "}
+                              {new Date(attempt.startedAt).toLocaleString()}
+                            </Text>
+                            {attempt.completedAt && (
+                              <div>
+                                <Text type="secondary">
+                                  Completed:{" "}
+                                  {new Date(
+                                    attempt.completedAt
+                                  ).toLocaleString()}
+                                </Text>
+                              </div>
+                            )}
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  );
+                }}
+              />
             )}
           </div>
         </div>
