@@ -369,7 +369,7 @@ export const useQuizStore = create<QuizState>()(
         }
 
         const score =
-          totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
+          totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
 
         const updatedAttempt = {
           ...attempt,

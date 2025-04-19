@@ -312,7 +312,7 @@ export default function QuestionsPage() {
               <Progress
                 type="circle"
                 percent={quizScore || 0}
-                status={quizScore && quizScore >= 70 ? "success" : "exception"}
+                status={quizScore && quizScore >= 60 ? "success" : "exception"}
               />
             </div>
 
