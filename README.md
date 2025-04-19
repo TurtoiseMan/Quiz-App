@@ -29,7 +29,7 @@ The application uses these key components:
 src/
 ├── app/                   # Next.js App Router pages and layouts
 │   ├── dashboard/         # Protected dashboard routes
-│   │   ├── answers/       # Answers history pages (not currently in use)
+│   │   ├── answers/       # Answers history pages (currently not in use)
 │   │   ├── history/       # Quiz history pages
 │   │   │   └── [id]/      # Individual quiz attempt details
 │   │   └── questions/     # Question management pages
@@ -43,7 +43,6 @@ src/
 ## Technologies Used
 
 - **Frontend Framework**: Next.js 15.3.0
-- **UI Library**: React 19.0.0
 - **Styling**: Tailwind CSS 4.0
 - **UI Components**: Ant Design 5.24.7
 - **State Management**: Zustand 5.0.3
