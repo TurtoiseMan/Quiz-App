@@ -354,7 +354,7 @@ export const useQuizStore = create<QuizState>()(
         if (!quiz) return null;
 
         let correctAnswers = 0;
-        let totalQuestions = quiz.questionIds.length;
+        const totalQuestions = quiz.questionIds.length;
 
         for (const questionId of quiz.questionIds) {
           const question = get().questions.find((q) => q.id === questionId);

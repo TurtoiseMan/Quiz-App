@@ -1,4 +1,4 @@
-import { User, Question, Answer } from "../types";
+import { User } from "../types";
 import {
   users as initialUsers,
   questions as initialQuestions,

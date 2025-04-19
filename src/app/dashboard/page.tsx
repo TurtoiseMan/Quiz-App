@@ -4,7 +4,6 @@ import { useAuthStore } from "@/store/authStore";
 import { useQuizStore } from "@/store/quizStore";
 import { useEffect, useState } from "react";
 import { Quiz, Question, QuizAttempt } from "@/types";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -27,7 +26,6 @@ import {
 } from "antd";
 import {
   ClockCircleOutlined,
-  CheckCircleOutlined,
   ExclamationCircleOutlined,
   EditOutlined,
   DeleteOutlined,
@@ -36,6 +34,12 @@ import {
 } from "@ant-design/icons";
 
 const { Title, Text, Paragraph } = Typography;
+interface QuizFormValues {
+  title: string;
+  description: string;
+  timeLimit: number;
+  questions: string[];
+}
 
 export default function Dashboard() {
   const router = useRouter();
@@ -124,17 +128,17 @@ export default function Dashboard() {
     });
   };
 
-  const toggleQuestionSelection = (questionId: string) => {
-    setSelectedQuestionIds((prev) => {
-      if (prev.includes(questionId)) {
-        return prev.filter((id) => id !== questionId);
-      } else {
-        return [...prev, questionId];
-      }
-    });
-  };
+  // const toggleQuestionSelection = (questionId: string) => {
+  //   setSelectedQuestionIds((prev) => {
+  //     if (prev.includes(questionId)) {
+  //       return prev.filter((id) => id !== questionId);
+  //     } else {
+  //       return [...prev, questionId];
+  //     }
+  //   });
+  // };
 
-  const handleSubmitQuiz = (values: any) => {
+  const handleSubmitQuiz = (values: QuizFormValues) => {
     try {
       if (editingQuizId) {
         updateQuiz(
@@ -466,7 +470,7 @@ export default function Dashboard() {
                       actions={
                         attempt.completedAt
                           ? [
-                              <Tag color="blue">
+                              <Tag key={`score-${attempt.id}`} color="blue">
                                 Score:{" "}
                                 {attempt.score !== undefined
                                   ? `${attempt.score}%`
@@ -474,10 +478,11 @@ export default function Dashboard() {
                               </Tag>,
                             ]
                           : [
-                              <Tag color="orange">
+                              <Tag key={`timer-${attempt.id}`} color="orange">
                                 {calculateTimeRemaining(quiz, attempt)}
                               </Tag>,
                               <Button
+                                key={`continue-${attempt.id}`}
                                 type="primary"
                                 size="small"
                                 href={`/dashboard/questions?attemptId=${attempt.id}`}

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Typography, Table, Tag, Card, Space, Button } from "antd";
 import {
   ClockCircleOutlined,
-  TrophyOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
 import { useQuizStore } from "@/store/quizStore";
@@ -46,7 +45,7 @@ export default function HistoryPage() {
     );
 
     setAttempts(sortedAttempts);
-  }, [user, getQuizAttemptsByUser, getQuizById, router]);
+  }, [user, getQuizAttemptsByUser, getQuizAttempts, getQuizById, router]);
 
   if (!user) return null;
 
@@ -66,7 +65,7 @@ export default function HistoryPage() {
     {
       title: "Status",
       key: "status",
-      render: (_: any, record: QuizAttempt) =>
+      render: (record: QuizAttempt) =>
         record.completedAt ? (
           <Tag color="green">Completed</Tag>
         ) : (
@@ -76,7 +75,7 @@ export default function HistoryPage() {
     {
       title: "Score",
       key: "score",
-      render: (_: any, record: QuizAttempt) =>
+      render: (record: QuizAttempt) =>
         record.score !== undefined ? (
           <Text strong>{record.score}%</Text>
         ) : (
@@ -86,7 +85,7 @@ export default function HistoryPage() {
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: QuizAttempt) => (
+      render: (record: QuizAttempt) => (
         <Link href={`/dashboard/history/${record.id}`}>
           <Button type="primary" size="small">
             View Details

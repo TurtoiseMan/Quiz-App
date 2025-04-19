@@ -27,11 +27,6 @@ import Link from "next/link";
 
 const { Title, Text, Paragraph } = Typography;
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
 
 export default function QuizAttemptDetailPage() {
   const params = useParams();
