@@ -3,10 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Typography, Table, Tag, Card, Space, Button } from "antd";
-import {
-  ClockCircleOutlined,
-  FileTextOutlined,
-} from "@ant-design/icons";
+import { ClockCircleOutlined, FileTextOutlined } from "@ant-design/icons";
 import { useQuizStore } from "@/store/quizStore";
 import { useAuthStore } from "@/store/authStore";
 import { QuizAttempt, Quiz } from "@/types";
@@ -33,7 +30,8 @@ export default function HistoryPage() {
       return;
     }
 
-    const userAttempts = user.role =="user"? getQuizAttemptsByUser(user.id): getQuizAttempts();
+    const userAttempts =
+      user.role == "user" ? getQuizAttemptsByUser(user.id) : getQuizAttempts();
     const attemptsWithQuiz = userAttempts.map((attempt) => {
       const quiz = getQuizById(attempt.quizId);
       return { ...attempt, quiz };
@@ -116,12 +114,18 @@ export default function HistoryPage() {
               <div style={{ textAlign: "center", padding: "20px" }}>
                 <FileTextOutlined style={{ fontSize: "48px", color: "#ccc" }} />
                 <Title level={4}>No quizzes attempted yet</Title>
-                <Text type="secondary">
-                  Start taking quizzes to see your history here
-                </Text>
+                {user.role !== "admin" && (
+                  <Text type="secondary">
+                    Start taking quizzes to see your history here
+                  </Text>
+                )}
                 <div style={{ marginTop: "20px" }}>
-                  <Link href="/dashboard/quizzes">
-                    <Button type="primary">Find Quizzes</Button>
+                  <Link href="/dashboard">
+                    {user.role === "admin" ? (
+                      <Button type="primary">Dashboard</Button>
+                    ) : (
+                      <Button type="primary">Find Quizzes</Button>
+                    )}
                   </Link>
                 </div>
               </div>
