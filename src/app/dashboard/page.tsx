@@ -6,6 +6,36 @@ import { useEffect, useState } from "react";
 import { Quiz, Question, QuizAttempt } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  InputNumber,
+  Alert,
+  Typography,
+  Divider,
+  Space,
+  Checkbox,
+  Tag,
+  List,
+  Row,
+  Col,
+  Modal,
+  Badge,
+  Tooltip,
+} from "antd";
+import {
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  QuestionCircleOutlined,
+  RightCircleOutlined,
+} from "@ant-design/icons";
+
+const { Title, Text, Paragraph } = Typography;
 
 export default function Dashboard() {
   const router = useRouter();
@@ -17,8 +47,10 @@ export default function Dashboard() {
   const updateQuiz = useQuizStore((state) => state.updateQuiz);
   const deleteQuiz = useQuizStore((state) => state.deleteQuiz);
   const getQuestions = useQuizStore((state) => state.getQuestions);
-  
-  const getQuizAttemptsByUser = useQuizStore((state) => state.getQuizAttemptsByUser);
+
+  const getQuizAttemptsByUser = useQuizStore(
+    (state) => state.getQuizAttemptsByUser
+  );
   const startQuizAttempt = useQuizStore((state) => state.startQuizAttempt);
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -32,14 +64,15 @@ export default function Dashboard() {
   const [timeLimit, setTimeLimit] = useState(30);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [form] = Form.useForm();
 
   useEffect(() => {
     setQuizzes(getQuizzes());
-    
+
     if (isAdmin()) {
       setQuestions(getQuestions());
     }
-    
+
     if (user) {
       setQuizAttempts(getQuizAttemptsByUser(user.id));
     }
@@ -55,6 +88,7 @@ export default function Dashboard() {
     setError("");
     setIsCreatingQuiz(true);
     setEditingQuizId(null);
+    form.resetFields();
   };
 
   const handleEditQuiz = (quiz: Quiz) => {
@@ -65,15 +99,29 @@ export default function Dashboard() {
     setError("");
     setIsCreatingQuiz(false);
     setEditingQuizId(quiz.id);
+    form.setFieldsValue({
+      title: quiz.title,
+      description: quiz.description,
+      timeLimit: quiz.timeLimit,
+      questions: quiz.questionIds,
+    });
   };
 
   const handleDeleteQuiz = (quizId: string) => {
-    if (confirm("Are you sure you want to delete this quiz?")) {
-      const success = deleteQuiz(quizId);
-      if (success) {
-        setQuizzes(getQuizzes());
-      }
-    }
+    Modal.confirm({
+      title: "Are you sure you want to delete this quiz?",
+      icon: <ExclamationCircleOutlined />,
+      content: "This action cannot be undone",
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
+      onOk() {
+        const success = deleteQuiz(quizId);
+        if (success) {
+          setQuizzes(getQuizzes());
+        }
+      },
+    });
   };
 
   const toggleQuestionSelection = (questionId: string) => {
@@ -86,40 +134,24 @@ export default function Dashboard() {
     });
   };
 
-  const handleSubmitQuiz = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title.trim()) {
-      setError("Quiz title cannot be empty");
-      return;
-    }
-
-    if (!description.trim()) {
-      setError("Quiz description cannot be empty");
-      return;
-    }
-
-    if (timeLimit <= 0) {
-      setError("Time limit must be greater than 0");
-      return;
-    }
-
-    if (selectedQuestionIds.length === 0) {
-      setError("Please select at least one question for the quiz");
-      return;
-    }
-
+  const handleSubmitQuiz = (values: any) => {
     try {
       if (editingQuizId) {
         updateQuiz(
           editingQuizId,
-          title,
-          description,
-          timeLimit,
-          selectedQuestionIds
+          values.title,
+          values.description,
+          values.timeLimit,
+          values.questions || []
         );
       } else if (user) {
-        createQuiz(title, description, timeLimit, selectedQuestionIds, user.id);
+        createQuiz(
+          values.title,
+          values.description,
+          values.timeLimit,
+          values.questions || [],
+          user.id
+        );
       }
 
       setTitle("");
@@ -129,6 +161,7 @@ export default function Dashboard() {
       setIsCreatingQuiz(false);
       setEditingQuizId(null);
       setError("");
+      form.resetFields();
       setQuizzes(getQuizzes());
     } catch (err) {
       setError("An error occurred. Please try again.");
@@ -144,374 +177,424 @@ export default function Dashboard() {
     setTimeLimit(30);
     setSelectedQuestionIds([]);
     setError("");
+    form.resetFields();
   };
 
   const handleStartQuiz = (quizId: string) => {
     if (!user) return;
-    
+
     const attempt = startQuizAttempt(quizId, user.id);
-    
+
     router.push(`/dashboard/questions?attemptId=${attempt.id}`);
   };
-  
+
   const calculateTimeRemaining = (quiz: Quiz, attempt: QuizAttempt) => {
     if (attempt.completedAt) return "Completed";
-    
+
     const startTime = new Date(attempt.startedAt).getTime();
     const timeLimitMs = quiz.timeLimit * 60 * 1000;
     const endTime = startTime + timeLimitMs;
     const now = new Date().getTime();
-    
+
     if (now > endTime) return "Time expired";
-    
+
     const remainingMs = endTime - now;
     const remainingMin = Math.floor(remainingMs / (60 * 1000));
     const remainingSec = Math.floor((remainingMs % (60 * 1000)) / 1000);
-    
+
     return `${remainingMin}m ${remainingSec}s remaining`;
   };
 
   const getQuizById = (quizId: string) => {
-    return quizzes.find(quiz => quiz.id === quizId);
+    return quizzes.find((quiz) => quiz.id === quizId);
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h1 className="text-2xl font-bold mb-4 text-black">Dashboard</h1>
+    <Card className="dashboard-container">
+      <Title level={2}>Dashboard</Title>
 
       {isAdmin() ? (
         <div>
-          <div className="bg-blue-50 p-6 rounded-lg mb-6">
-            <h2 className="text-xl font-semibold mb-2 text-black">
-              Admin Dashboard
-            </h2>
-            <p className="text-black">
+          <Card type="inner" className="mb-6">
+            <Title level={3}>Admin Dashboard</Title>
+            <Paragraph>
               Welcome {user.username}! You have access to manage questions and
               view all answers.
-            </p>
-          </div>
+            </Paragraph>
+          </Card>
 
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-black">Manage Quizzes</h2>
+              <Title level={3}>Manage Quizzes</Title>
               {!isCreatingQuiz && !editingQuizId && (
-                <button
-                  onClick={handleCreateQuiz}
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
+                <Button type="primary" onClick={handleCreateQuiz}>
                   Create New Quiz
-                </button>
+                </Button>
               )}
             </div>
 
             {(isCreatingQuiz || editingQuizId) && (
-              <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                <h2 className="text-lg font-medium mb-3 text-black">
+              <Card className="mb-6">
+                <Title level={4}>
                   {editingQuizId ? "Edit Quiz" : "Create New Quiz"}
-                </h2>
+                </Title>
 
-                <form onSubmit={handleSubmitQuiz}>
-                  {error && (
-                    <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
-                      {error}
-                    </div>
-                  )}
+                {error && (
+                  <Alert
+                    message={error}
+                    type="error"
+                    showIcon
+                    className="mb-4"
+                  />
+                )}
 
-                  <div className="mb-4">
-                    <label
-                      htmlFor="title"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Quiz Title
-                    </label>
-                    <input
-                      id="title"
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
-                      placeholder="Enter quiz title..."
-                    />
-                  </div>
+                <Form
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmitQuiz}
+                  initialValues={{
+                    title,
+                    description,
+                    timeLimit,
+                    questions: selectedQuestionIds,
+                  }}
+                >
+                  <Form.Item
+                    label="Quiz Title"
+                    name="title"
+                    rules={[
+                      { required: true, message: "Please enter quiz title" },
+                    ]}
+                  >
+                    <Input placeholder="Enter quiz title..." />
+                  </Form.Item>
 
-                  <div className="mb-4">
-                    <label
-                      htmlFor="description"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Quiz Description
-                    </label>
-                    <textarea
-                      id="description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
+                  <Form.Item
+                    label="Quiz Description"
+                    name="description"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter quiz description",
+                      },
+                    ]}
+                  >
+                    <Input.TextArea
                       rows={3}
                       placeholder="Enter quiz description..."
                     />
-                  </div>
+                  </Form.Item>
 
-                  <div className="mb-4">
-                    <label
-                      htmlFor="timeLimit"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Time Limit (minutes)
-                    </label>
-                    <input
-                      id="timeLimit"
-                      type="number"
-                      min="1"
-                      value={timeLimit}
-                      onChange={(e) => setTimeLimit(Number(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
-                    />
-                  </div>
+                  <Form.Item
+                    label="Time Limit (minutes)"
+                    name="timeLimit"
+                    rules={[
+                      { required: true, message: "Please enter time limit" },
+                      {
+                        type: "number",
+                        min: 1,
+                        message: "Time must be greater than 0",
+                      },
+                    ]}
+                  >
+                    <InputNumber min={1} style={{ width: "100%" }} />
+                  </Form.Item>
 
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Questions
-                    </label>
-                    {questions.length === 0 ? (
-                      <p className="text-sm text-gray-500">
-                        No questions available. Please create questions first.
-                      </p>
-                    ) : (
-                      <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-md p-2">
-                        {questions.map((question) => (
-                          <div
-                            key={question.id}
-                            className="flex items-center mb-2 p-2 hover:bg-gray-100 rounded"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`question-${question.id}`}
-                              checked={selectedQuestionIds.includes(
-                                question.id
+                  <Form.Item
+                    label="Select Questions"
+                    name="questions"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please select at least one question",
+                      },
+                    ]}
+                  >
+                    <>
+                      {questions.length === 0 ? (
+                        <Alert
+                          message="No questions available. Please create questions first."
+                          type="info"
+                          showIcon
+                        />
+                      ) : (
+                        <Checkbox.Group style={{ width: "100%" }}>
+                          <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-md p-2">
+                            <List
+                              dataSource={questions}
+                              renderItem={(question) => (
+                                <List.Item>
+                                  <Checkbox value={question.id}>
+                                    {question.text}
+                                  </Checkbox>
+                                </List.Item>
                               )}
-                              onChange={() =>
-                                toggleQuestionSelection(question.id)
-                              }
-                              className="mr-2"
                             />
-                            <label
-                              htmlFor={`question-${question.id}`}
-                              className="text-sm text-gray-700 cursor-pointer"
-                            >
-                              {question.text}
-                            </label>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-1 text-sm text-gray-600">
-                      {selectedQuestionIds.length} question(s) selected
-                    </div>
-                  </div>
+                        </Checkbox.Group>
+                      )}
+                    </>
+                  </Form.Item>
 
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="px-4 py-2 text-sm font-medium text-black bg-gray-100 rounded-md hover:bg-gray-200"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                      disabled={questions.length === 0}
-                    >
-                      {editingQuizId ? "Update" : "Create"} Quiz
-                    </button>
-                  </div>
-                </form>
-              </div>
+                  <Form.Item>
+                    <Text type="secondary" className="block mt-1">
+                      {form.getFieldValue("questions")?.length || 0} question(s)
+                      selected
+                    </Text>
+                  </Form.Item>
+
+                  <Form.Item>
+                    <Space>
+                      <Button onClick={handleCancel}>Cancel</Button>
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        disabled={questions.length === 0}
+                      >
+                        {editingQuizId ? "Update" : "Create"} Quiz
+                      </Button>
+                    </Space>
+                  </Form.Item>
+                </Form>
+              </Card>
             )}
 
             {!isCreatingQuiz && !editingQuizId && quizzes.length === 0 ? (
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <p className="text-center text-black">
-                  No quizzes available yet. Click "Create New Quiz" to create
-                  one.
-                </p>
-              </div>
+              <Alert
+                message="No quizzes available yet. Click 'Create New Quiz' to create one."
+                type="info"
+                showIcon
+              />
             ) : (
               !isCreatingQuiz &&
               !editingQuizId && (
-                <div className="space-y-4">
-                  {quizzes.map((quiz) => (
-                    <div key={quiz.id} className="bg-blue-50 p-4 rounded-lg">
-                      <div className="flex justify-between">
-                        <div>
-                          <h3 className="font-medium text-lg text-black">
-                            {quiz.title}
-                          </h3>
-                          <p className="text-gray-600 mt-1">
-                            {quiz.description}
-                          </p>
+                <List
+                  itemLayout="vertical"
+                  dataSource={quizzes}
+                  renderItem={(quiz) => (
+                    <List.Item
+                      key={quiz.id}
+                      actions={[
+                        <Button
+                          key="edit"
+                          type="link"
+                          icon={<EditOutlined />}
+                          onClick={() => handleEditQuiz(quiz)}
+                        >
+                          Edit
+                        </Button>,
+                        <Button
+                          key="delete"
+                          type="link"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => handleDeleteQuiz(quiz.id)}
+                        >
+                          Delete
+                        </Button>,
+                      ]}
+                    >
+                      <Card>
+                        <List.Item.Meta
+                          title={quiz.title}
+                          description={quiz.description}
+                        />
+                        <div className="mt-3">
+                          <Space>
+                            <Tag icon={<ClockCircleOutlined />} color="blue">
+                              {quiz.timeLimit} minutes
+                            </Tag>
+                            <Tag
+                              icon={<QuestionCircleOutlined />}
+                              color="green"
+                            >
+                              {quiz.questionIds.length} questions
+                            </Tag>
+                          </Space>
+                          <div>
+                            <Text
+                              type="secondary"
+                              className="text-xs mt-2 block"
+                            >
+                              Created:{" "}
+                              {new Date(quiz.createdAt).toLocaleString()}
+                            </Text>
+                          </div>
                         </div>
-                        <div className="space-x-2">
-                          <button
-                            onClick={() => handleEditQuiz(quiz)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteQuiz(quiz.id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-3 text-sm text-gray-700">
-                        <p>Time Limit: {quiz.timeLimit} minutes</p>
-                        <p>Questions: {quiz.questionIds.length}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Created: {new Date(quiz.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      </Card>
+                    </List.Item>
+                  )}
+                />
               )
             )}
           </div>
         </div>
       ) : (
         <div>
-          <div className="bg-green-50 p-6 rounded-lg mb-6">
-            <h2 className="text-xl font-semibold mb-2 text-black">
-              Student Dashboard
-            </h2>
-            <p className="text-black">
-              Welcome {user.username}! Here you can take quizzes and view your past results.
-            </p>
-          </div>
-          
+          <Card
+            type="inner"
+            className="mb-6"
+            style={{ backgroundColor: "#f6ffed", borderColor: "#b7eb8f" }}
+          >
+            <Title level={3}>Student Dashboard</Title>
+            <Paragraph>
+              Welcome {user.username}! Here you can take quizzes and view your
+              past results.
+            </Paragraph>
+          </Card>
+
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-black">Your Quiz Attempts</h2>
-            
+            <Title level={4}>Your Quiz Attempts</Title>
+
             {quizAttempts.length === 0 ? (
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <p className="text-black">You haven't attempted any quizzes yet.</p>
-              </div>
+              <Alert
+                message="You haven't attempted any quizzes yet."
+                type="info"
+                showIcon
+              />
             ) : (
-              <div className="space-y-4">
-                {quizAttempts.map((attempt) => {
+              <List
+                itemLayout="horizontal"
+                dataSource={quizAttempts}
+                renderItem={(attempt) => {
                   const quiz = getQuizById(attempt.quizId);
                   if (!quiz) return null;
-                  
+
                   return (
-                    <div key={attempt.id} className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-medium text-black">{quiz.title}</h3>
-                          <p className="text-sm text-gray-600">
-                            Started: {new Date(attempt.startedAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <div>
-                          {attempt.completedAt ? (
-                            <div className="text-right">
-                              <span className="bg-blue-100 text-blue-800 font-medium px-2.5 py-0.5 rounded-full text-xs">
-                                Score: {attempt.score !== undefined ? `${attempt.score}%` : 'N/A'}
-                              </span>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Completed: {new Date(attempt.completedAt).toLocaleString()}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="flex space-x-2 items-center">
-                              <span className="text-xs text-orange-600">
+                    <List.Item
+                      key={attempt.id}
+                      actions={
+                        attempt.completedAt
+                          ? [
+                              <Tag color="blue">
+                                Score:{" "}
+                                {attempt.score !== undefined
+                                  ? `${attempt.score}%`
+                                  : "N/A"}
+                              </Tag>,
+                            ]
+                          : [
+                              <Tag color="orange">
                                 {calculateTimeRemaining(quiz, attempt)}
-                              </span>
-                              <Link 
+                              </Tag>,
+                              <Button
+                                type="primary"
+                                size="small"
                                 href={`/dashboard/questions?attemptId=${attempt.id}`}
-                                className="bg-blue-600 text-white text-xs px-2 py-1 rounded hover:bg-blue-700"
                               >
                                 Continue
-                              </Link>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                              </Button>,
+                            ]
+                      }
+                    >
+                      <List.Item.Meta
+                        title={quiz.title}
+                        description={
+                          <div>
+                            <Text>
+                              Started:{" "}
+                              {new Date(attempt.startedAt).toLocaleString()}
+                            </Text>
+                            {attempt.completedAt && (
+                              <div>
+                                <Text type="secondary">
+                                  Completed:{" "}
+                                  {new Date(
+                                    attempt.completedAt
+                                  ).toLocaleString()}
+                                </Text>
+                              </div>
+                            )}
+                          </div>
+                        }
+                      />
+                    </List.Item>
                   );
-                })}
-              </div>
+                }}
+              />
             )}
           </div>
-          
+
           <div>
-            <h2 className="text-xl font-semibold mb-4 text-black">Available Quizzes</h2>
-            
+            <Title level={4}>Available Quizzes</Title>
+
             {quizzes.length === 0 ? (
-              <div className="bg-gray-50 p-4 rounded-lg text-center">
-                <p className="text-black">No quizzes are available right now. Check back later!</p>
-              </div>
+              <Alert
+                message="No quizzes are available right now. Check back later!"
+                type="info"
+                showIcon
+              />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Row gutter={[16, 16]}>
                 {quizzes.map((quiz) => {
                   const hasCompletedAttempt = quizAttempts.some(
-                    attempt => attempt.quizId === quiz.id && attempt.completedAt
+                    (attempt) =>
+                      attempt.quizId === quiz.id && attempt.completedAt
                   );
-                  
+
                   const inProgressAttempt = quizAttempts.find(
-                    attempt => attempt.quizId === quiz.id && !attempt.completedAt
+                    (attempt) =>
+                      attempt.quizId === quiz.id && !attempt.completedAt
                   );
-                  
+
                   return (
-                    <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition">
-                      <h3 className="font-semibold text-lg text-black mb-2">{quiz.title}</h3>
-                      <p className="text-gray-600 text-sm mb-3">{quiz.description}</p>
-                      
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full">
-                          {quiz.questionIds.length} questions
-                        </span>
-                        <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full">
-                          {quiz.timeLimit} min
-                        </span>
-                      </div>
-                      
-                      {inProgressAttempt ? (
-                        <Link
-                          href={`/dashboard/questions?attemptId=${inProgressAttempt.id}`}
-                          className="block w-full bg-yellow-500 hover:bg-yellow-600 text-center text-white py-2 px-4 rounded-md font-medium"
-                        >
-                          Continue Quiz
-                        </Link>
-                      ) : hasCompletedAttempt ? (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 text-sm">
-                            Already completed
-                          </span>
-                          <button
-                            onClick={() => handleStartQuiz(quiz.id)}
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded-md text-sm"
+                    <Col xs={24} sm={12} key={quiz.id}>
+                      <Card
+                        hoverable
+                        title={quiz.title}
+                        extra={
+                          <Space>
+                            <Tooltip title="Questions">
+                              <Badge
+                                count={quiz.questionIds.length}
+                                color="blue"
+                              />
+                            </Tooltip>
+                            <Tooltip title="Minutes">
+                              <Badge count={quiz.timeLimit} color="green" />
+                            </Tooltip>
+                          </Space>
+                        }
+                      >
+                        <Paragraph>{quiz.description}</Paragraph>
+
+                        <Divider />
+
+                        {inProgressAttempt ? (
+                          <Button
+                            type="primary"
+                            block
+                            href={`/dashboard/questions?attemptId=${inProgressAttempt.id}`}
+                            style={{ backgroundColor: "#faad14" }}
                           >
-                            Try Again
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleStartQuiz(quiz.id)}
-                          className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium"
-                        >
-                          Start Quiz
-                        </button>
-                      )}
-                    </div>
+                            Continue Quiz
+                          </Button>
+                        ) : hasCompletedAttempt ? (
+                          <div className="flex justify-between items-center">
+                            <Text type="secondary">Already completed</Text>
+                            <Button onClick={() => handleStartQuiz(quiz.id)}>
+                              Try Again
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="primary"
+                            block
+                            icon={<RightCircleOutlined />}
+                            onClick={() => handleStartQuiz(quiz.id)}
+                          >
+                            Start Quiz
+                          </Button>
+                        )}
+                      </Card>
+                    </Col>
                   );
                 })}
-              </div>
+              </Row>
             )}
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

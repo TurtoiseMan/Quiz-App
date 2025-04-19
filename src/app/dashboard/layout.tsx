@@ -5,6 +5,9 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { useQuizStore } from "@/store/quizStore";
 import Navbar from "@/components/Navbar";
+import { Layout, Spin } from "antd";
+
+const { Content } = Layout;
 
 export default function DashboardLayout({
   children,
@@ -50,8 +53,15 @@ export default function DashboardLayout({
 
   if (!hydrated || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        Loading...
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Spin size="large" tip="Loading..." />
       </div>
     );
   }
@@ -61,12 +71,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Layout style={{ minHeight: "100vh" }}>
       <Navbar user={user} onSignOut={handleSignOut} />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {children}
-      </div>
-    </div>
+      <Content style={{ background: "#f5f5f5", padding: "24px" }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>{children}</div>
+      </Content>
+    </Layout>
   );
 }

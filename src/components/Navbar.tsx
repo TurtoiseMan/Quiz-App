@@ -3,6 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User } from "@/types";
+import {
+  Layout,
+  Menu,
+  Button,
+  Typography,
+  Avatar,
+  Space,
+  Dropdown,
+} from "antd";
+import {
+  UserOutlined,
+  LogoutOutlined,
+  DashboardOutlined,
+  QuestionCircleOutlined,
+  FileTextOutlined,
+} from "@ant-design/icons";
+import type { MenuProps } from "antd";
+
+const { Header } = Layout;
+const { Text } = Typography;
 
 interface NavbarProps {
   user: User;
@@ -12,72 +32,94 @@ interface NavbarProps {
 export default function Navbar({ user, onSignOut }: NavbarProps) {
   const pathname = usePathname();
 
-  const isActive = (path: string) => {
-    return pathname === path ? "bg-gray-100" : "";
-  };
+  const items: MenuProps["items"] = [
+    {
+      key: "/dashboard",
+      label: <Link href="/dashboard">Dashboard</Link>,
+      icon: <DashboardOutlined />,
+    },
+    user.role === "admin"
+      ? {
+          key: "/dashboard/questions",
+          label: <Link href="/dashboard/questions">Questions</Link>,
+          icon: <QuestionCircleOutlined />,
+        }
+      : null,
+    {
+      key: "/dashboard/answers",
+      label: <Link href="/dashboard/answers">Answers</Link>,
+      icon: <FileTextOutlined />,
+    },
+  ].filter(Boolean);
+
+  const userMenuItems: MenuProps["items"] = [
+    {
+      key: "profile",
+      label: (
+        <Space>
+          <UserOutlined />
+          <span>
+            {user.username} ({user.role})
+          </span>
+        </Space>
+      ),
+      disabled: true,
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "signout",
+      danger: true,
+      label: "Sign Out",
+      icon: <LogoutOutlined />,
+      onClick: onSignOut,
+    },
+  ];
 
   return (
-    <nav className="bg-white shadow w-full mb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 flex items-center">
-              <a href="/dashboard">
-                <span className="text-xl font-bold text-teal-500">
-                  Quiz App
-                </span>
-              </a>
-            </div>
-          </div>
+    <Header
+      style={{
+        background: "#fff",
+        padding: "0 auto",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10%" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Link
+            href="/dashboard"
+            style={{ textDecoration: "none", marginRight: 40 }}
+          >
+            <Typography.Title level={4} style={{ margin: 0, color: "#1890ff" }}>
+              Quiz App
+            </Typography.Title>
+          </Link>
 
-          <div className="flex items-center">
-            <div className="hidden md:ml-6 md:flex md:space-x-4">
-              <Link
-                href="/dashboard"
-                className={`px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 ${isActive(
-                  "/dashboard"
-                )}`}
-              >
-                Dashboard
-              </Link>
+          <Menu
+            mode="horizontal"
+            selectedKeys={[pathname]}
+            style={{ border: "none", minWidth: 400 }}
+            items={items}
+          />
+        </div>
 
-              {user.role === "admin" && (
-                <Link
-                  href="/dashboard/questions"
-                  className={`px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 ${isActive(
-                    "/dashboard/questions"
-                  )}`}
-                >
-                  Questions
-                </Link>
-              )}
-
-              <Link
-                href="/dashboard/answers"
-                className={`px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 ${isActive(
-                  "/dashboard/answers"
-                )}`}
-              >
-                Answers
-              </Link>
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            <div className="flex items-center">
-              <span className="text-sm font-medium text-gray-700 mr-4">
-                {user.username} ({user.role})
-              </span>
-              <button
-                onClick={onSignOut}
-                className="px-3 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <Dropdown
+            menu={{ items: userMenuItems }}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
+            <Space style={{ cursor: "pointer" }}>
+              <Avatar
+                icon={<UserOutlined />}
+                style={{ backgroundColor: "#1890ff" }}
+              />
+              <Text strong>{user.username}</Text>
+            </Space>
+          </Dropdown>
         </div>
       </div>
-    </nav>
+    </Header>
   );
 }

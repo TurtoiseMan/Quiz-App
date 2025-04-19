@@ -4,6 +4,21 @@ import { useAuthStore } from "@/store/authStore";
 import { useQuizStore } from "@/store/quizStore";
 import { useState, useEffect } from "react";
 import { Question, Answer } from "@/types";
+import {
+  Button,
+  Radio,
+  Card,
+  Typography,
+  Badge,
+  Alert,
+  Collapse,
+  Space,
+  Divider,
+  message,
+} from "antd";
+
+const { Title, Text, Paragraph } = Typography;
+const { Panel } = Collapse;
 
 export default function AnswersPage() {
   const user = useAuthStore((state) => state.user);
@@ -30,6 +45,7 @@ export default function AnswersPage() {
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const getUsernameById = (userId: string) => {
     const foundUser = users.find((u) => u.id === userId);
@@ -78,8 +94,10 @@ export default function AnswersPage() {
       if (selectedQuestion && user) {
         if (editingAnswerId) {
           updateAnswer(editingAnswerId, answerText);
+          messageApi.success("Answer updated successfully");
         } else {
           addAnswer(selectedQuestion.id, user.id, answerText);
+          messageApi.success("Answer submitted successfully");
         }
 
         setUserAnswers(getAnswersByUser(user.id));
@@ -88,6 +106,7 @@ export default function AnswersPage() {
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
+      messageApi.error("Failed to submit answer");
       console.error(err);
     }
   };
@@ -97,260 +116,266 @@ export default function AnswersPage() {
   };
 
   const renderAdminView = () => (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-black">All Answers</h1>
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      {contextHolder}
+      <Title level={2}>All Answers</Title>
 
       {questions.length === 0 ? (
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <p className="text-black">No questions have been created yet.</p>
-        </div>
+        <Alert
+          type="info"
+          message="No questions have been created yet."
+          showIcon
+        />
       ) : (
-        <div className="space-y-6">
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
           {questions.map((question) => {
             const questionAnswers = getAnswersByQuestion(question.id);
             return (
-              <div key={question.id} className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-xl font-semibold text-black mb-4">
-                  {question.text}
-                </h2>
+              <Card key={question.id}>
+                <Title level={4}>{question.text}</Title>
 
                 {questionAnswers.length === 0 ? (
-                  <p className="text-gray-500">
+                  <Text type="secondary">
                     No answers submitted for this question yet.
-                  </p>
+                  </Text>
                 ) : (
-                  <div className="space-y-4">
+                  <Space
+                    direction="vertical"
+                    size="middle"
+                    style={{ width: "100%" }}
+                  >
                     {questionAnswers.map((answer) => (
-                      <div
+                      <Card
                         key={answer.id}
-                        className="bg-gray-50 p-4 rounded-lg"
+                        size="small"
+                        style={{ backgroundColor: "#f9f9f9" }}
                       >
-                        <div className="flex justify-between">
-                          <p className="text-black">
-                            Selected option:{" "}
-                            <span className="font-medium">{answer.text}</span>
-                          </p>
-                        </div>
-                        <div className="flex justify-between mt-2">
-                          <p className="text-xs text-gray-500">
-                            Username: {getUsernameById(answer.userId)} | Last
-                            updated:{" "}
-                            {new Date(answer.updatedAt).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-blue-600">
-                            {answer.history && answer.history.length > 0
-                              ? `Changed ${answer.history.length} ${
-                                  answer.history.length === 1 ? "time" : "times"
-                                }`
-                              : "Original selection"}
-                          </p>
-                        </div>
+                        <Space
+                          direction="vertical"
+                          size="small"
+                          style={{ width: "100%" }}
+                        >
+                          <Text strong>Selected option: {answer.text}</Text>
 
-                        {answer.history && answer.history.length > 0 && (
-                          <div className="mt-3">
-                            <details className="text-sm">
-                              <summary className="text-blue-600 cursor-pointer">
-                                View change history
-                              </summary>
-                              <div className="mt-2 space-y-2 pl-4 border-l-2 border-gray-200">
-                                {answer.history.map((historyItem, index) => (
-                                  <div key={index} className="text-gray-700">
-                                    <p>Selected: {historyItem.text}</p>
-                                    <p className="text-xs text-gray-500">
-                                      {new Date(
-                                        historyItem.updatedAt
-                                      ).toLocaleString()}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
-                          </div>
-                        )}
-                      </div>
+                          <Space split={<Divider type="vertical" />}>
+                            <Text type="secondary">
+                              Username: {getUsernameById(answer.userId)}
+                            </Text>
+                            <Text type="secondary">
+                              Last updated:{" "}
+                              {new Date(answer.updatedAt).toLocaleString()}
+                            </Text>
+                            {answer.history && answer.history.length > 0 ? (
+                              <Text type="secondary">
+                                Changed {answer.history.length}{" "}
+                                {answer.history.length === 1 ? "time" : "times"}
+                              </Text>
+                            ) : (
+                              <Text type="secondary">Original selection</Text>
+                            )}
+                          </Space>
+
+                          {answer.history && answer.history.length > 0 && (
+                            <Collapse ghost>
+                              <Panel header="View change history" key="1">
+                                <Space
+                                  direction="vertical"
+                                  size="small"
+                                  style={{ width: "100%" }}
+                                >
+                                  {answer.history.map((historyItem, index) => (
+                                    <div key={index}>
+                                      <Text>Selected: {historyItem.text}</Text>
+                                      <br />
+                                      <Text type="secondary">
+                                        {new Date(
+                                          historyItem.updatedAt
+                                        ).toLocaleString()}
+                                      </Text>
+                                    </div>
+                                  ))}
+                                </Space>
+                              </Panel>
+                            </Collapse>
+                          )}
+                        </Space>
+                      </Card>
                     ))}
-                  </div>
+                  </Space>
                 )}
-              </div>
+              </Card>
             );
           })}
-        </div>
+        </Space>
       )}
-    </div>
+    </Space>
   );
 
   const renderUserView = () => (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-black">Answer Questions</h1>
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      {contextHolder}
+      <Title level={2}>Answer Questions</Title>
 
       {selectedQuestion ? (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-black mb-4">
-            {selectedQuestion.text}
-          </h2>
+        <Card>
+          <Title level={4}>{selectedQuestion.text}</Title>
 
           <form onSubmit={handleSubmitAnswer}>
             {error && (
-              <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
-                {error}
-              </div>
+              <Alert
+                type="error"
+                message={error}
+                style={{ marginBottom: 16 }}
+              />
             )}
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+            <div style={{ marginBottom: 16 }}>
+              <Text strong style={{ display: "block", marginBottom: 8 }}>
                 Choose an option:
-              </label>
-              <div className="space-y-3">
-                {selectedQuestion?.options.map((option) => (
-                  <div key={option} className="flex items-center">
-                    <input
-                      id={`option-${option}`}
-                      name="answer-option"
-                      type="radio"
-                      value={option}
-                      checked={answerText === option}
-                      onChange={() => setAnswerText(option)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <label
-                      htmlFor={`option-${option}`}
-                      className="ml-3 block text-sm font-medium text-black"
-                    >
+              </Text>
+              <Radio.Group
+                value={answerText}
+                onChange={(e) => setAnswerText(e.target.value)}
+                style={{ width: "100%" }}
+              >
+                <Space direction="vertical">
+                  {selectedQuestion?.options.map((option) => (
+                    <Radio key={option} value={option}>
                       {option}
-                    </label>
-                  </div>
-                ))}
-              </div>
+                    </Radio>
+                  ))}
+                </Space>
+              </Radio.Group>
             </div>
 
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
+            >
+              <Button
                 onClick={() => {
                   setSelectedQuestion(null);
                   setAnswerText("");
                   setEditingAnswerId(null);
                   setShowFeedback(false);
                 }}
-                className="px-4 py-2 text-sm font-medium text-black bg-gray-100 rounded-md hover:bg-gray-200"
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-              >
+              </Button>
+              <Button type="primary" htmlType="submit">
                 {editingAnswerId ? "Update Answer" : "Submit Answer"}
-              </button>
+              </Button>
             </div>
           </form>
 
           {showFeedback && (
-            <div className="mt-6">
-              <div
-                className={`p-4 rounded ${
+            <div style={{ marginTop: 24 }}>
+              <Alert
+                type={isCorrectAnswer() ? "success" : "error"}
+                message={
                   isCorrectAnswer()
-                    ? "bg-green-50 text-green-700"
-                    : "bg-red-50 text-red-700"
-                }`}
-              >
-                {isCorrectAnswer()
-                  ? "Your answer is correct!"
-                  : "Your answer is incorrect."}
-
-                {!isCorrectAnswer() && selectedQuestion && (
-                  <div className="mt-2">
-                    <p className="font-medium">
+                    ? "Your answer is correct!"
+                    : "Your answer is incorrect."
+                }
+                description={
+                  !isCorrectAnswer() &&
+                  selectedQuestion && (
+                    <Text strong>
                       Correct answer: {selectedQuestion.correctAnswer}
-                    </p>
-                  </div>
-                )}
-              </div>
+                    </Text>
+                  )
+                }
+                showIcon
+              />
             </div>
           )}
 
           {editingAnswerId && (
-            <div className="mt-6">
-              <h3 className="text-lg font-medium text-black mb-2">
-                Answer History
-              </h3>
-              {getAnswerByQuestionAndUser(
-                selectedQuestion.id,
-                user!.id
-              )?.history?.map((historyItem, index) => (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg mb-2">
-                  <p className="text-black">{historyItem.text}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Updated: {new Date(historyItem.updatedAt).toLocaleString()}
-                  </p>
-                </div>
-              ))}
+            <div style={{ marginTop: 24 }}>
+              <Title level={5}>Answer History</Title>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {getAnswerByQuestionAndUser(
+                  selectedQuestion.id,
+                  user!.id
+                )?.history?.map((historyItem, index) => (
+                  <Card
+                    key={index}
+                    size="small"
+                    style={{ backgroundColor: "#f9f9f9" }}
+                  >
+                    <Text>{historyItem.text}</Text>
+                    <br />
+                    <Text type="secondary">
+                      Updated:{" "}
+                      {new Date(historyItem.updatedAt).toLocaleString()}
+                    </Text>
+                  </Card>
+                ))}
+              </Space>
             </div>
           )}
-        </div>
+        </Card>
       ) : (
         <div>
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-            <div className="flex">
-              <p className="text-sm text-yellow-700">
-                {userAnswers.length > 0
-                  ? "You can edit your previous answers by selecting a question."
-                  : "Click on a question to provide your answer."}
-              </p>
-            </div>
-          </div>
+          <Alert
+            type="warning"
+            message={
+              userAnswers.length > 0
+                ? "You can edit your previous answers by selecting a question."
+                : "Click on a question to provide your answer."
+            }
+            style={{ marginBottom: 16 }}
+            showIcon
+          />
 
-          <div className="bg-white rounded-lg shadow divide-y">
-            {questions.length === 0 ? (
-              <div className="p-6">
-                <p className="text-gray-500">No questions available yet.</p>
-              </div>
-            ) : (
-              questions.map((question) => {
+          {questions.length === 0 ? (
+            <Card>
+              <Text type="secondary">No questions available yet.</Text>
+            </Card>
+          ) : (
+            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+              {questions.map((question) => {
                 const userAnswer = getAnswerByQuestionAndUser(
                   question.id,
                   user!.id
                 );
                 return (
-                  <div
+                  <Card
                     key={question.id}
-                    className="p-6 cursor-pointer hover:bg-gray-50"
+                    hoverable
                     onClick={() => handleQuestionSelect(question)}
                   >
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-lg font-medium text-black">
+                    <Space
+                      align="start"
+                      style={{ width: "100%", justifyContent: "space-between" }}
+                    >
+                      <Title level={5} style={{ margin: 0 }}>
                         {question.text}
-                      </h3>
-                      {userAnswer ? (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-0.5 text-sm font-medium text-green-800">
-                          Answered
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-0.5 text-sm font-medium text-gray-800">
-                          Not answered
-                        </span>
-                      )}
-                    </div>
+                      </Title>
+                      <Badge
+                        status={userAnswer ? "success" : "default"}
+                        text={userAnswer ? "Answered" : "Not answered"}
+                      />
+                    </Space>
                     {userAnswer && (
-                      <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                      <Paragraph type="secondary" style={{ marginTop: 8 }}>
                         Your answer: {userAnswer.text}
-                      </p>
+                      </Paragraph>
                     )}
-                  </div>
+                  </Card>
                 );
-              })
-            )}
-          </div>
+              })}
+            </Space>
+          )}
         </div>
       )}
-    </div>
+    </Space>
   );
 
   if (!user) return null;
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <Card bordered={false}>
       {isAdmin() ? renderAdminView() : renderUserView()}
-    </div>
+    </Card>
   );
 }

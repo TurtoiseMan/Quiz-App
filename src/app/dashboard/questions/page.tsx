@@ -5,6 +5,32 @@ import { useQuizStore } from "@/store/quizStore";
 import { useEffect, useState } from "react";
 import { Question, Quiz, QuizAttempt } from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Typography,
+  Button,
+  Card,
+  Space,
+  Form,
+  Input,
+  Select,
+  Alert,
+  Radio,
+  Steps,
+  Progress,
+  Divider,
+  Tag,
+  Result,
+  message,
+  Spin,
+  Statistic,
+  Popconfirm,
+  List,
+} from "antd";
+
+const { Title, Text, Paragraph } = Typography;
+const { TextArea } = Input;
+const { Step } = Steps;
+const { Countdown } = Statistic;
 
 export default function QuestionsPage() {
   const router = useRouter();
@@ -36,6 +62,7 @@ export default function QuestionsPage() {
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState<string>("");
+  const [form] = Form.useForm();
 
   const [currentAttempt, setCurrentAttempt] = useState<QuizAttempt | null>(
     null
@@ -118,11 +145,14 @@ export default function QuestionsPage() {
 
   if (!attemptId && !isAdmin()) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="text-red-600 font-medium">
-          Access denied. You need admin privileges to manage questions.
-        </div>
-      </div>
+      <Card>
+        <Alert
+          message="Access Denied"
+          description="You need admin privileges to manage questions."
+          type="error"
+          showIcon
+        />
+      </Card>
     );
   }
 
@@ -158,6 +188,7 @@ export default function QuestionsPage() {
     if (completedAttempt) {
       setIsQuizCompleted(true);
       setQuizScore(completedAttempt.score || 0);
+      message.success("Quiz submitted successfully!");
     }
   };
 
@@ -168,6 +199,7 @@ export default function QuestionsPage() {
   };
 
   const handleAddQuestion = () => {
+    form.resetFields();
     setQuestionText("");
     setOptions(["", "", "", ""]);
     setCorrectAnswer("");
@@ -177,6 +209,11 @@ export default function QuestionsPage() {
   };
 
   const handleEditQuestion = (question: Question) => {
+    form.setFieldsValue({
+      questionText: question.text,
+      options: question.options,
+      correctAnswer: question.correctAnswer,
+    });
     setQuestionText(question.text);
     setOptions([...question.options]);
     setCorrectAnswer(question.correctAnswer);
@@ -186,11 +223,10 @@ export default function QuestionsPage() {
   };
 
   const handleDeleteQuestion = (questionId: string) => {
-    if (confirm("Are you sure you want to delete this question?")) {
-      const success = deleteQuestion(questionId);
-      if (success) {
-        setQuestions(getQuestions());
-      }
+    const success = deleteQuestion(questionId);
+    if (success) {
+      setQuestions(getQuestions());
+      message.success("Question deleted successfully!");
     }
   };
 
@@ -200,34 +236,22 @@ export default function QuestionsPage() {
     setOptions(newOptions);
   };
 
-  const handleSubmitQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!questionText.trim()) {
-      setError("Question text cannot be empty");
-      return;
-    }
-
-    if (options.some((option) => !option.trim())) {
-      setError("All options must be filled");
-      return;
-    }
-
-    if (!correctAnswer) {
-      setError("Please select a correct answer");
-      return;
-    }
+  const handleSubmitQuestion = (values: any) => {
+    const { questionText, options, correctAnswer } = values;
 
     try {
       if (editingQuestionId) {
         updateQuestion(editingQuestionId, questionText, options, correctAnswer);
         setQuestions(getQuestions());
+        message.success("Question updated successfully!");
       } else if (user) {
         const newQuestion = addQuestion(questionText, user.id);
         updateQuestion(newQuestion.id, questionText, options, correctAnswer);
         setQuestions(getQuestions());
+        message.success("Question added successfully!");
       }
 
+      form.resetFields();
       setQuestionText("");
       setOptions(["", "", "", ""]);
       setCorrectAnswer("");
@@ -247,415 +271,379 @@ export default function QuestionsPage() {
     setOptions(["", "", "", ""]);
     setCorrectAnswer("");
     setError("");
+    form.resetFields();
   };
 
   if (attemptId) {
     if (error) {
       return (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="text-red-600 font-medium">{error}</div>
-          <button
+        <Card>
+          <Alert message="Error" description={error} type="error" showIcon />
+          <Button
+            type="primary"
             onClick={() => router.push("/dashboard")}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            style={{ marginTop: 16 }}
           >
             Back to Dashboard
-          </button>
-        </div>
+          </Button>
+        </Card>
       );
     }
 
     if (isQuizCompleted) {
       return (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold text-black mb-6">Quiz Complete!</h1>
-
-          <div className="bg-blue-50 p-6 rounded-lg mb-6">
-            <h2 className="text-xl font-semibold text-black mb-2">
-              {currentQuiz?.title}
-            </h2>
-            <p className="text-gray-700 mb-4">{currentQuiz?.description}</p>
-
-            <div className="text-center">
-              <p className="text-xl font-bold text-black mb-2">Your Score:</p>
-              <p className="text-3xl font-bold text-blue-600">
-                {quizScore?.toFixed(0)}%
-              </p>
+        <Card>
+          <Result
+            status="success"
+            title="Quiz Completed!"
+            subTitle={currentQuiz?.title}
+            extra={[
+              <Button
+                key="back"
+                type="primary"
+                onClick={() => router.push("/dashboard")}
+              >
+                Back to Dashboard
+              </Button>,
+            ]}
+          >
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <Title level={4}>Your Score: {quizScore}%</Title>
+              <Progress
+                type="circle"
+                percent={quizScore || 0}
+                status={quizScore && quizScore >= 70 ? "success" : "exception"}
+              />
             </div>
-          </div>
 
-          <div className="mt-6 border-t pt-6">
-            <h3 className="text-lg font-semibold mb-4 text-black">Question Review:</h3>
-            <div className="space-y-6">
-              {quizQuestions.map((question, index) => {
+            <Divider>Question Review</Divider>
+
+            <List
+              itemLayout="vertical"
+              dataSource={quizQuestions}
+              renderItem={(question, index) => {
                 const userAnswer = selectedAnswers[question.id];
                 const isCorrect = userAnswer === question.correctAnswer;
 
                 return (
-                  <div key={question.id} className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block w-6 h-6 rounded-full text-center text-white text-sm font-medium bg-gray-500">
-                        {index + 1}
-                      </span>
-                      <h4 className="font-medium text-black">
-                        {question.text}
-                      </h4>
-                    </div>
-
-                    <div className="ml-8 mt-3 space-y-2">
-                      {question.options.map((option) => (
-                        <div
-                          key={option}
-                          className={`p-2 rounded flex items-center text-black  ${
-                            option === question.correctAnswer
-                              ? "bg-green-50 border border-green-200"
-                              : option === userAnswer &&
-                                option !== question.correctAnswer
-                              ? "bg-red-50 border border-red-200"
-                              : "bg-gray-50 border border-gray-200"
-                          }`}
-                        >
-                          {option === question.correctAnswer && (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 text-green-500 mr-2"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          )}
-
-                          {option === userAnswer &&
-                            option !== question.correctAnswer && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-red-500 mr-2"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            )}
-
-                          {option === userAnswer ? (
-                            <span className="font-medium">
-                              {option} (Your answer)
-                            </span>
-                          ) : option === question.correctAnswer ? (
-                            <span className="font-medium">
-                              {option} (Correct answer)
-                            </span>
-                          ) : (
-                            <span>{option}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div
-                      className={`mt-3 p-2 rounded-md text-sm font-medium ${
-                        isCorrect
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                  <List.Item>
+                    <Card
+                      size="small"
+                      title={
+                        <Space>
+                          <Tag color="blue">{index + 1}</Tag>
+                          <Text strong>{question.text}</Text>
+                        </Space>
+                      }
                     >
-                      {isCorrect ? "Correct! ✓" : "Incorrect! ✗"}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                      <List
+                        dataSource={question.options}
+                        renderItem={(option) => {
+                          let color = "";
+                          let icon = null;
 
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Back to Dashboard
-          </button>
-        </div>
+                          if (option === question.correctAnswer) {
+                            color = "success";
+                            icon = "✓";
+                          } else if (
+                            option === userAnswer &&
+                            option !== question.correctAnswer
+                          ) {
+                            color = "error";
+                            icon = "✗";
+                          }
+
+                          return (
+                            <List.Item>
+                              <Radio checked={userAnswer === option} disabled>
+                                <Space>
+                                  <Text>{option}</Text>
+                                  {color && <Tag color={color}>{icon}</Tag>}
+                                </Space>
+                              </Radio>
+                            </List.Item>
+                          );
+                        }}
+                      />
+
+                      <Alert
+                        style={{ marginTop: 8 }}
+                        message={isCorrect ? "Correct!" : "Incorrect!"}
+                        type={isCorrect ? "success" : "error"}
+                        showIcon
+                      />
+                    </Card>
+                  </List.Item>
+                );
+              }}
+            />
+          </Result>
+        </Card>
       );
     }
 
     if (!currentQuiz || quizQuestions.length === 0) {
       return (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="text-center">
-            <p className="text-gray-700">Loading quiz questions...</p>
+        <Card>
+          <div style={{ textAlign: "center", padding: 24 }}>
+            <Spin size="large" />
+            <Paragraph style={{ marginTop: 16 }}>
+              Loading quiz questions...
+            </Paragraph>
           </div>
-        </div>
+        </Card>
       );
     }
 
     const currentQuestion = quizQuestions[currentQuestionIndex];
 
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-black">{currentQuiz.title}</h1>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Time remaining:</span>
-            <span
-              className={`font-bold ${
-                timeRemaining < 60 ? "text-red-600" : "text-black"
-              }`}
+      <Card>
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <Space style={{ width: "100%", justifyContent: "space-between" }}>
+            <Title level={3}>{currentQuiz.title}</Title>
+            <Countdown
+              title="Time Remaining"
+              value={Date.now() + timeRemaining * 1000}
+              format="mm:ss"
+              onFinish={handleSubmitQuiz}
+              valueStyle={{ color: timeRemaining < 60 ? "#ff4d4f" : undefined }}
+            />
+          </Space>
+
+          <Steps
+            current={currentQuestionIndex}
+            onChange={setCurrentQuestionIndex}
+            size="small"
+            style={{ marginBottom: 16 }}
+            items={quizQuestions.map((_, index) => ({
+              title: `Q${index + 1}`,
+              status: selectedAnswers[quizQuestions[index].id]
+                ? "finish"
+                : index === currentQuestionIndex
+                ? "process"
+                : "wait",
+            }))}
+          />
+
+          <Card>
+            <Title level={5}>
+              Question {currentQuestionIndex + 1} of {quizQuestions.length}
+            </Title>
+            <Paragraph strong>{currentQuestion.text}</Paragraph>
+
+            <Radio.Group
+              onChange={(e) =>
+                handleAnswerSelect(currentQuestion.id, e.target.value)
+              }
+              value={selectedAnswers[currentQuestion.id]}
+              style={{ width: "100%" }}
             >
-              {formatTime(timeRemaining)}
-            </span>
-          </div>
-        </div>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {currentQuestion.options.map((option, index) => (
+                  <Radio key={index} value={option} style={{ marginBottom: 8 }}>
+                    <Card
+                      hoverable
+                      size="small"
+                      style={{
+                        width: "100%",
+                        borderColor:
+                          selectedAnswers[currentQuestion.id] === option
+                            ? "#1890ff"
+                            : undefined,
+                      }}
+                    >
+                      <Space>
+                        <Text>{String.fromCharCode(65 + index)}</Text>
+                        <Text>{option}</Text>
+                      </Space>
+                    </Card>
+                  </Radio>
+                ))}
+              </Space>
+            </Radio.Group>
+          </Card>
 
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <div className="text-sm text-gray-600 mb-2">
-            Question {currentQuestionIndex + 1} of {quizQuestions.length}
-          </div>
-
-          <h2 className="text-lg font-medium mb-4 text-black">
-            {currentQuestion.text}
-          </h2>
-
-          <div className="space-y-2">
-            {currentQuestion.options.map((option, index) => (
-              <div
-                key={index}
-                className={`p-3 rounded-md cursor-pointer border text-black ${
-                  selectedAnswers[currentQuestion.id] === option
-                    ? "bg-blue-100 border-blue-400"
-                    : "bg-white border-gray-300 hover:bg-gray-50"
-                }`}
-                onClick={() => handleAnswerSelect(currentQuestion.id, option)}
-              >
-                <span className="font-medium mr-2">
-                  {String.fromCharCode(65 + index)}.
-                </span>
-                {option}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex justify-between">
-          <button
-            onClick={handlePrevQuestion}
-            disabled={currentQuestionIndex === 0}
-            className={`px-4 py-2 rounded-md ${
-              currentQuestionIndex === 0
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-gray-200 text-black hover:bg-gray-300"
-            }`}
-          >
-            Previous
-          </button>
-
-          {currentQuestionIndex < quizQuestions.length - 1 ? (
-            <button
-              onClick={handleNextQuestion}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          <Space style={{ width: "100%", justifyContent: "space-between" }}>
+            <Button
+              onClick={handlePrevQuestion}
+              disabled={currentQuestionIndex === 0}
             >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmitQuiz}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-            >
-              Submit Quiz
-            </button>
-          )}
-        </div>
+              Previous
+            </Button>
 
-        <div className="mt-6 flex items-center justify-center">
-          <div className="flex space-x-1">
-            {quizQuestions.map((_, index) => (
-              <div
-                key={index}
-                onClick={() => setCurrentQuestionIndex(index)}
-                className={`w-3 h-3 rounded-full cursor-pointer ${
-                  index === currentQuestionIndex
-                    ? "bg-blue-600"
-                    : selectedAnswers[quizQuestions[index].id]
-                    ? "bg-green-500"
-                    : "bg-gray-300"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+            {currentQuestionIndex < quizQuestions.length - 1 ? (
+              <Button type="primary" onClick={handleNextQuestion}>
+                Next
+              </Button>
+            ) : (
+              <Button type="primary" danger onClick={handleSubmitQuiz}>
+                Submit Quiz
+              </Button>
+            )}
+          </Space>
+        </Space>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-black">Manage Questions</h1>
-        {!isAddingQuestion && !editingQuestionId && (
-          <button
-            onClick={handleAddQuestion}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+    <Card>
+      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space style={{ width: "100%", justifyContent: "space-between" }}>
+          <Title level={3}>Manage Questions</Title>
+          {!isAddingQuestion && !editingQuestionId && (
+            <Button type="primary" onClick={handleAddQuestion}>
+              Add New Question
+            </Button>
+          )}
+        </Space>
+
+        {(isAddingQuestion || editingQuestionId) && (
+          <Card
+            title={editingQuestionId ? "Edit Question" : "Add New Question"}
           >
-            Add New Question
-          </button>
-        )}
-      </div>
-
-      {(isAddingQuestion || editingQuestionId) && (
-        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-          <h2 className="text-lg font-medium mb-3 text-black">
-            {editingQuestionId ? "Edit Question" : "Add New Question"}
-          </h2>
-
-          <form onSubmit={handleSubmitQuestion}>
             {error && (
-              <div className="mb-4 text-sm text-red-600 bg-red-50 p-2 rounded">
-                {error}
-              </div>
+              <Alert
+                message={error}
+                type="error"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
             )}
 
-            <div className="mb-4">
-              <label
-                htmlFor="questionText"
-                className="block text-sm font-medium text-gray-700 mb-1"
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmitQuestion}
+              initialValues={{
+                questionText,
+                options,
+                correctAnswer,
+              }}
+            >
+              <Form.Item
+                name="questionText"
+                label="Question Text"
+                rules={[
+                  { required: true, message: "Please enter the question text" },
+                ]}
               >
-                Question Text
-              </label>
-              <textarea
-                id="questionText"
-                value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
-                rows={3}
-                placeholder="Enter the question text..."
-              />
-            </div>
+                <TextArea rows={3} placeholder="Enter the question text..." />
+              </Form.Item>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Options
-              </label>
-              <div className="space-y-2">
-                {options.map((option, index) => (
-                  <div key={index} className="flex items-center">
-                    <span className="mr-2 w-6 text-center font-medium text-gray-700">
-                      {String.fromCharCode(65 + index)}
-                    </span>
-                    <input
-                      type="text"
+              <Form.List name="options">
+                {(fields) => (
+                  <>
+                    {fields.map((field, index) => (
+                      <Form.Item
+                        label={`Option ${String.fromCharCode(65 + index)}`}
+                        key={field.key}
+                        name={[field.name]}
+                        rules={[
+                          { required: true, message: "Option cannot be empty" },
+                        ]}
+                      >
+                        <Input
+                          placeholder={`Enter option ${String.fromCharCode(
+                            65 + index
+                          )}...`}
+                        />
+                      </Form.Item>
+                    ))}
+                  </>
+                )}
+              </Form.List>
+
+              <Form.Item
+                name="correctAnswer"
+                label="Correct Answer"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select the correct answer",
+                  },
+                ]}
+              >
+                <Select placeholder="Select the correct answer...">
+                  {options.map((option, index) => (
+                    <Select.Option
+                      key={index}
                       value={option}
-                      onChange={(e) =>
-                        handleOptionChange(index, e.target.value)
-                      }
-                      placeholder={`Enter option ${String.fromCharCode(
-                        65 + index
-                      )}...`}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label
-                htmlFor="correctAnswer"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Correct Answer
-              </label>
-              <select
-                id="correctAnswer"
-                value={correctAnswer}
-                onChange={(e) => setCorrectAnswer(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200 text-black"
-              >
-                <option value="" disabled>
-                  Select the correct answer...
-                </option>
-                {options.map((option, index) => (
-                  <option key={index} value={option}>
-                    {String.fromCharCode(65 + index)}: {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 text-sm font-medium text-black bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-              >
-                {editingQuestionId ? "Update" : "Add"} Question
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {!isAddingQuestion && !editingQuestionId && questions.length === 0 ? (
-        <div className="bg-blue-50 p-6 rounded-lg">
-          <p className="text-center text-black">
-            No questions available yet. Click "Add New Question" to create one.
-          </p>
-        </div>
-      ) : (
-        !isAddingQuestion &&
-        !editingQuestionId && (
-          <div className="space-y-4">
-            {questions.map((question) => (
-              <div key={question.id} className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex justify-between">
-                  <p className="text-black font-medium">{question.text}</p>
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => handleEditQuestion(question)}
-                      className="text-blue-600 hover:text-blue-800"
+                      disabled={!option}
                     >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteQuestion(question.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {question.options.map((option, index) => (
-                    <div key={index} className="text-sm text-gray-700">
-                      <span className="font-medium mr-1">
-                        {String.fromCharCode(65 + index)}:
-                      </span>{" "}
-                      {option}
-                    </div>
+                      {option || `Option ${String.fromCharCode(65 + index)}`}
+                    </Select.Option>
                   ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Correct Answer: {question.correctAnswer}
-                </p>
-                <p className="text-xs text-gray-500 mt-2">
-                  Created: {new Date(question.createdAt).toLocaleString()}
-                </p>
-              </div>
-            ))}
-          </div>
-        )
-      )}
-    </div>
+                </Select>
+              </Form.Item>
+
+              <Form.Item>
+                <Space>
+                  <Button type="primary" htmlType="submit">
+                    {editingQuestionId ? "Update Question" : "Add Question"}
+                  </Button>
+                  <Button onClick={handleCancel}>Cancel</Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </Card>
+        )}
+
+        <List
+          dataSource={questions}
+          renderItem={(question) => (
+            <List.Item
+              actions={[
+                <Button
+                  key="edit"
+                  type="link"
+                  onClick={() => handleEditQuestion(question)}
+                >
+                  Edit
+                </Button>,
+                <Popconfirm
+                  key="delete"
+                  title="Delete this question?"
+                  description="Are you sure you want to delete this question?"
+                  onConfirm={() => handleDeleteQuestion(question.id)}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <Button type="link" danger>
+                    Delete
+                  </Button>
+                </Popconfirm>,
+              ]}
+            >
+              <List.Item.Meta
+                title={question.text}
+                description={
+                  <Space direction="vertical">
+                    {question.options.map((option, index) => (
+                      <Space key={index}>
+                        <Tag
+                          color={
+                            option === question.correctAnswer
+                              ? "green"
+                              : undefined
+                          }
+                        >
+                          {String.fromCharCode(65 + index)}
+                        </Tag>
+                        <Text>{option}</Text>
+                        {option === question.correctAnswer && (
+                          <Tag color="success">Correct</Tag>
+                        )}
+                      </Space>
+                    ))}
+                  </Space>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      </Space>
+    </Card>
   );
 }

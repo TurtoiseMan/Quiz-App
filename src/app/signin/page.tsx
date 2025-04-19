@@ -3,23 +3,27 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import { Card, Form, Input, Button, Alert, Typography } from "antd";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
+
+const { Title } = Typography;
 
 export default function SignInPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: {
+    username: string;
+    password: string;
+  }) => {
     setError("");
     setIsLoading(true);
 
     try {
-      const success = login(username, password);
+      const success = login(values.username, values.password);
       if (success) {
         router.push("/dashboard");
       } else {
@@ -35,80 +39,67 @@ export default function SignInPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md">
-        <div className="text-center text-black">
-          <h1 className="text-3xl font-bold">Quiz App</h1>
-          <h2 className="mt-2 text-xl">Sign In</h2>
+      <Card className="w-full max-w-md" bordered>
+        <div className="text-center mb-6">
+          <Title level={2}>Quiz App</Title>
+          <Title level={4}>Sign In</Title>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+        {error && (
+          <Alert
+            message="Error"
+            description={error}
+            type="error"
+            showIcon
+            className="mb-4"
+          />
+        )}
 
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
-                autoComplete="username"
-              />
-            </div>
+        <Form
+          name="signin"
+          layout="vertical"
+          onFinish={handleSubmit}
+          autoComplete="off"
+        >
+          <Form.Item
+            label="Username"
+            name="username"
+            rules={[{ required: true, message: "Please input your username!" }]}
+          >
+            <Input
+              prefix={<UserOutlined className="site-form-item-icon" />}
+              placeholder="Username"
+              autoComplete="username"
+            />
+          </Form.Item>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
-                autoComplete="current-password"
-              />
-            </div>
-          </div>
+          <Form.Item
+            label="Password"
+            name="password"
+            rules={[{ required: true, message: "Please input your password!" }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined className="site-form-item-icon" />}
+              placeholder="Password"
+              autoComplete="current-password"
+            />
+          </Form.Item>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </button>
-          </div>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={isLoading} block>
+              Sign In
+            </Button>
+          </Form.Item>
 
           <div className="text-center text-sm">
-            <p>Demo accounts:</p>
-            <p className="mt-1 text-gray-600">
-              Admin: username - admin, password - admin123
-            </p>
-            <p className="text-gray-600">
-              User: username - user1, password - user123
+            <p>
+              Test accounts: <br />
+              admin / password <br />
+              student / password
             </p>
           </div>
-        </form>
-      </div>
+        </Form>
+      </Card>
     </div>
   );
 }
