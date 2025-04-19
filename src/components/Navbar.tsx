@@ -46,8 +46,8 @@ export default function Navbar({ user, onSignOut }: NavbarProps) {
         }
       : null,
     {
-      key: "/dashboard/answers",
-      label: <Link href="/dashboard/answers">Answers</Link>,
+      key: "/dashboard/history",
+      label: <Link href="/dashboard/history">History</Link>,
       icon: <FileTextOutlined />,
     },
   ].filter(Boolean);
