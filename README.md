@@ -31,6 +31,7 @@ The application uses these key components:
 src/
 ├── app/                   # Next.js App Router pages and layouts
 │   ├── dashboard/         # Protected dashboard routes
+│   │   ├── answers/       # Answers history pages (not currently in use)
 │   │   ├── history/       # Quiz history pages
 │   │   │   └── [id]/      # Individual quiz attempt details
 │   │   └── questions/     # Question management pages
@@ -66,6 +67,7 @@ src/
 ### Quiz System
 
 - Create and manage quizzes with customizable time limits
+- Auto submission when timer runs out
 - Add questions to quizzes
 - Track quiz attempts and scores for users
 
