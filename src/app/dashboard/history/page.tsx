@@ -84,11 +84,17 @@ export default function HistoryPage() {
       title: "Actions",
       key: "actions",
       render: (record: QuizAttempt) => (
-        <Link href={`/dashboard/history/${record.id}`}>
-          <Button type="primary" size="small">
+        record.completedAt ? (
+          <Link href={`/dashboard/history/${record.id}`}>
+            <Button type="primary" size="small">
+              View Details
+            </Button>
+          </Link>
+        ) : (
+          <Button type="primary" size="small" disabled title="Quiz is in progress">
             View Details
           </Button>
-        </Link>
+        )
       ),
     },
   ];
