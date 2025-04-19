@@ -29,7 +29,6 @@ import {
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
-const { Step } = Steps;
 const { Countdown } = Statistic;
 
 export default function QuestionsPage() {
@@ -59,7 +58,7 @@ export default function QuestionsPage() {
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(
     null
   );
-  const [questionText, setQuestionText] = useState("");
+  const [text, setText] = useState("");
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState<string>("");
   const [form] = Form.useForm();
@@ -192,15 +191,15 @@ export default function QuestionsPage() {
     }
   };
 
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
+  // const formatTime = (seconds: number): string => {
+  //   const minutes = Math.floor(seconds / 60);
+  //   const remainingSeconds = seconds % 60;
+  //   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  // };
 
   const handleAddQuestion = () => {
     form.resetFields();
-    setQuestionText("");
+    setText("");
     setOptions(["", "", "", ""]);
     setCorrectAnswer("");
     setError("");
@@ -210,11 +209,11 @@ export default function QuestionsPage() {
 
   const handleEditQuestion = (question: Question) => {
     form.setFieldsValue({
-      questionText: question.text,
+      text: question.text,
       options: question.options,
       correctAnswer: question.correctAnswer,
     });
-    setQuestionText(question.text);
+    setText(question.text);
     setOptions([...question.options]);
     setCorrectAnswer(question.correctAnswer);
     setError("");
@@ -232,27 +231,38 @@ export default function QuestionsPage() {
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
+    const oldValue = options[index];
     newOptions[index] = value;
     setOptions(newOptions);
+
+    if (correctAnswer === oldValue) {
+      setCorrectAnswer(value);
+      form.setFieldsValue({ correctAnswer: value });
+    }
+
+    if (correctAnswer === oldValue && value === "") {
+      setCorrectAnswer("");
+      form.setFieldsValue({ correctAnswer: "" });
+    }
   };
 
-  const handleSubmitQuestion = (values: any) => {
-    const { questionText, options, correctAnswer } = values;
+  const handleSubmitQuestion = (values: Question) => {
+    const { text, options, correctAnswer } = values;
 
     try {
       if (editingQuestionId) {
-        updateQuestion(editingQuestionId, questionText, options, correctAnswer);
+        updateQuestion(editingQuestionId, text, options, correctAnswer);
         setQuestions(getQuestions());
         message.success("Question updated successfully!");
       } else if (user) {
-        const newQuestion = addQuestion(questionText, user.id);
-        updateQuestion(newQuestion.id, questionText, options, correctAnswer);
+        const newQuestion = addQuestion(text, user.id);
+        updateQuestion(newQuestion.id, text, options, correctAnswer);
         setQuestions(getQuestions());
         message.success("Question added successfully!");
       }
 
       form.resetFields();
-      setQuestionText("");
+      setText("");
       setOptions(["", "", "", ""]);
       setCorrectAnswer("");
       setIsAddingQuestion(false);
@@ -267,7 +277,7 @@ export default function QuestionsPage() {
   const handleCancel = () => {
     setIsAddingQuestion(false);
     setEditingQuestionId(null);
-    setQuestionText("");
+    setText("");
     setOptions(["", "", "", ""]);
     setCorrectAnswer("");
     setError("");
@@ -517,13 +527,13 @@ export default function QuestionsPage() {
               layout="vertical"
               onFinish={handleSubmitQuestion}
               initialValues={{
-                questionText,
+                text,
                 options,
                 correctAnswer,
               }}
             >
               <Form.Item
-                name="questionText"
+                name="text"
                 label="Question Text"
                 rules={[
                   { required: true, message: "Please enter the question text" },
@@ -548,6 +558,9 @@ export default function QuestionsPage() {
                           placeholder={`Enter option ${String.fromCharCode(
                             65 + index
                           )}...`}
+                          onChange={(e) =>
+                            handleOptionChange(index, e.target.value)
+                          }
                         />
                       </Form.Item>
                     ))}
@@ -565,16 +578,22 @@ export default function QuestionsPage() {
                   },
                 ]}
               >
-                <Select placeholder="Select the correct answer...">
-                  {options.map((option, index) => (
-                    <Select.Option
-                      key={index}
-                      value={option}
-                      disabled={!option}
-                    >
-                      {option || `Option ${String.fromCharCode(65 + index)}`}
-                    </Select.Option>
-                  ))}
+                <Select
+                  placeholder="Select the correct answer..."
+                  value={correctAnswer}
+                  onChange={(value) => setCorrectAnswer(value)}
+                >
+                  {form
+                    .getFieldValue("options")
+                    ?.map((option: string, index: number) => (
+                      <Select.Option
+                        key={index}
+                        value={option}
+                        disabled={!option.trim()}
+                      >
+                        {option || `Option ${String.fromCharCode(65 + index)}`}
+                      </Select.Option>
+                    ))}
                 </Select>
               </Form.Item>
 
